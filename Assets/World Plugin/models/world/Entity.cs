@@ -1,9 +1,8 @@
 ﻿ using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
-/// <summary>
+
 /// An entity is an object that can move and or contains it's own intelligence
 /// </summary>
 public abstract class Entity : MonoBehaviour {
@@ -42,6 +41,12 @@ public abstract class Entity : MonoBehaviour {
 			obj.vars.Add ("rV", "0");
 		if(!obj.vars.ContainsKey("r"))
 			obj.vars.Add ("r", JsonConvert.SerializeObject(new SerializableTransform(Vector3.zero)));
+
+		OnEntityStart ();
+	}
+
+	protected virtual void OnEntityStart(){
+
 	}
 
 	/// <summary>
@@ -73,6 +78,12 @@ public abstract class Entity : MonoBehaviour {
 				transform.eulerAngles.y + rotation.normalized.y, transform.eulerAngles.z + rotation.normalized.z);
 			rotateTime = 0;
 		}
+
+		OnEntityUpdate ();
+	}
+
+	protected virtual void OnEntityUpdate(){
+
 	}
 	#endregion
 
@@ -153,7 +164,7 @@ public abstract class Entity : MonoBehaviour {
 			ObjectCommunicator.CreateMessage (obj.id, "ClientChangeTempPlayer", args);
 		}
 	}
-		
+
 	/// <summary>
 	/// Removes the temporary player ownership of the local entity. Sends to other clients.
 	/// </summary>
