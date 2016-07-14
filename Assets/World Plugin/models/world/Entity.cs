@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 /// <summary>
 /// An entity is an object that can move and or contains it's own intelligence
 /// </summary>
-public class Entity : MonoBehaviour {
+public abstract class Entity : MonoBehaviour {
 	#region Public Entity Settings
 	public bool active;
 	public bool instantTurn{ get; set; }
@@ -17,7 +17,6 @@ public class Entity : MonoBehaviour {
 	private float moveTime;
 	private float rotateTime;
 
-	private Action action;
 	private float deltaTime;
 	#endregion
 
@@ -34,7 +33,7 @@ public class Entity : MonoBehaviour {
 		obj = GetComponent<WorldObject> ();
 		LoadBalancer.Balance ();
 		instantTurn = Constants.DEFAULTINSTANTTURN;
-		action = GetComponent<Action> ();
+
 		if(!obj.vars.ContainsKey("tP"))
 			obj.vars.Add ("tP", "");
 		if(!obj.vars.ContainsKey("mV"))
@@ -57,9 +56,9 @@ public class Entity : MonoBehaviour {
 		float rotationVelocity = float.Parse(obj.vars["rV"]);
 		float moveVelocity = float.Parse(obj.vars["mV"]);
 
-		if((active && action != null && obj.vars["tP"] == "") 
+		if((active && obj.vars["tP"] == "") 
 			|| obj.vars["tP"] == LoadBalancer.connectionID.ToString())
-			action.Act (this);
+			Act ();
 
 		if (moveVelocity != 0) {
 			if(instantTurn)
@@ -234,4 +233,6 @@ public class Entity : MonoBehaviour {
 		obj.vars ["tP"] = name;
 	}
 	#endregion
+
+	public abstract void Act ();
 }
