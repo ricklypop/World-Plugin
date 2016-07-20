@@ -14,7 +14,7 @@ public class ObjectCommunicator {
 	public static void SendChangeMessage(Change change){
 		if(WorldObjectCache.KeyCount() > change.id){
 			WorldObjectCache.GetObjectByIndex(change.id).gameObject.SendMessage(
-				WorldConstants.GetStringValue((WorldConstants.WorldMethods) change.func), change.args);
+				StringValue.GetStringValue((WorldConstants.WorldMethods) change.func), change.args);
 		}
 	} 
 

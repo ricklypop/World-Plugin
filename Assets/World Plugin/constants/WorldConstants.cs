@@ -29,28 +29,8 @@ public class WorldConstants {
 		[StringValue("ClientChangeTempPlayer")] CHANGE_PLAYER_TEMP
 	}
 
-	public static string GetStringValue(Enum value){
-		string output = null;
-		Type type = value.GetType();
-
-		//Check first in our cached results...
-
-		//Look for our 'StringValueAttribute' 
-
-		//in the field's custom attributes
-
-		FieldInfo fi = type.GetField(value.ToString());
-		StringValue[] attrs =
-			fi.GetCustomAttributes(typeof(StringValue),
-				false) as StringValue[];
-		if (attrs.Length > 0)
-		{ 
-			output = attrs[0].Value;
-		}
-
-		return output;
-	}
-
+	public const int WORLD_VARS_LENGTH = 12;
+	public const int WORLD_METHODS_LENGTH = 6;
 
 	public static readonly float MOVEMENTFACTOR = 1;
 
