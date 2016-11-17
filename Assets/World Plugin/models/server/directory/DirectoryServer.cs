@@ -21,13 +21,13 @@ public class DirectoryServer : MonoBehaviour {
 		config.MinUpdateTimeout = 10;
 		config.DisconnectTimeout = 2000;
 		config.PingTimeout = 500;
-		NetworkServer.Configure(config, Master.maxConnections);
+		NetworkServer.Configure(config, ServerClientConstants.maxConnections);
 
 		NetworkServer.RegisterHandler(MsgType.Disconnect, OnDisconnect);
 
-		NetworkServer.RegisterHandler(Master.RequestServerId, SendServerConnection);
-		NetworkServer.RegisterHandler(Master.ConnectServerId, ConnectServer);
-		NetworkServer.RegisterHandler(Master.UpdateServerId, UpdateServer);
+		NetworkServer.RegisterHandler(ServerClientConstants.RequestServerId, SendServerConnection);
+		NetworkServer.RegisterHandler(ServerClientConstants.ConnectServerId, ConnectServer);
+		NetworkServer.RegisterHandler(ServerClientConstants.UpdateServerId, UpdateServer);
 	}
 		
 	void Update(){
@@ -65,19 +65,19 @@ public class DirectoryServer : MonoBehaviour {
 	}
 
 	void SendServerConnection(NetworkMessage m){
-		var msg = m.ReadMessage<Master.RequestServer> ();
+		var msg = m.ReadMessage<ServerClientConstants.RequestServer> ();
 		Server sendTo = CheckForRoom (msg.room);
 		if (sendTo == null)
 			sendTo = LeastPopulatedServer ();
 
-		Master.RequestServer message = new Master.RequestServer ();
+		ServerClientConstants.RequestServer message = new ServerClientConstants.RequestServer ();
 		message.ip = sendTo.ip;
 		message.port = sendTo.port;
-		NetworkServer.SendToClient (m.conn.connectionId, Master.RequestServerId, message);
+		NetworkServer.SendToClient (m.conn.connectionId, ServerClientConstants.RequestServerId, message);
 	}
 		
 	void ConnectServer(NetworkMessage m){
-		var msg = m.ReadMessage<Master.ConnectServer> ();
+		var msg = m.ReadMessage<ServerClientConstants.ConnectServer> ();
 		Server server = new Server ();
 		server.ip = msg.ip;
 		server.port = msg.port;
@@ -87,7 +87,7 @@ public class DirectoryServer : MonoBehaviour {
 	}
 
 	void UpdateServer(NetworkMessage m){
-		var msg = m.ReadMessage<Master.UpdateServer> ();
+		var msg = m.ReadMessage<ServerClientConstants.UpdateServer> ();
 		servers [m.conn.connectionId].numPlayers = msg.numPlayers;
 		if(msg.addRoom != "" && msg.addRoom != null )
 			servers [m.conn.connectionId].rooms.Add (msg.addRoom);

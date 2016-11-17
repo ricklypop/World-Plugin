@@ -56,10 +56,7 @@ public class SerializableWorldObject
 		Transform create = (Transform) GameObject.Instantiate(TypesConverter.ConvertType((WorldObjectCache.Types)type), t.position, t.rotation);
 		GameObject.Destroy (t.gameObject);
 		WorldObject worldObject = create.GetComponent<WorldObject> ();
-		worldObject.type = (WorldObjectCache.Types)type;
-		worldObject.vars = vars;
-		worldObject.id = id;
-		worldObject.playerID = playerID;
+        worldObject.SetWorldObject(id, playerID, (WorldObjectCache.Types)type, vars);
 		return create;
 	}
 	#endregion

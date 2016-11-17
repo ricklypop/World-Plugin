@@ -21,12 +21,8 @@ public class Room{
 		allPlayers.Add (player.connectionID, player);
 		host = players [0];
 
-		string[] plays = new string[players.Count];
 		for (int i = 0; i < players.Count; i++)
-			plays [i] = players [i].deviceID;
-
-		for (int i = 0; i < players.Count; i++)
-			players [i].UpdatePlayer (i + 1, players.Count, players[i].connectionID, -1, false, plays);
+			players [i].UpdatePlayer (i + 1, players.Count, players[i].connectionID, -1, false);
 		totalPlayers = players.Count;
 	}
 
@@ -44,12 +40,8 @@ public class Room{
 		if (players.Count != 0) {
 			host = players [0];
 
-			string[] plays = new string[players.Count];
 			for (int i = 0; i < players.Count; i++)
-				plays [i] = players [i].deviceID;
-
-			for (int i = 0; i < players.Count; i++)
-				players [i].UpdatePlayer (i + 1, players.Count, players[i].connectionID, left, wasHost, plays);
+				players [i].UpdatePlayer (i + 1, players.Count, players[i].connectionID, left, wasHost);
 			MasterServerClient.main.UpdateServer (allPlayers.Count, "", "");
 		}
 		else {
@@ -61,7 +53,7 @@ public class Room{
 	/// <summary>
 	/// Sends the change message.
 	/// </summary>
-	public void SendMessage(Player player, Master.SendChanges msg){
+	public void SendMessage(Player player, ServerClientConstants.SendChanges msg){
 		foreach(Player p in players)
 			if(player != p)
 				p.SendMessage(msg);
@@ -72,7 +64,7 @@ public class Room{
 	/// </summary>
 	public void Save(){
 		Player p = NextSavePlayer ();
-		NetworkServer.SendToClient (p.connectionID, Master.SaveWorldId, new Master.SaveWorld());
+		NetworkServer.SendToClient (p.connectionID, ServerClientConstants.SaveWorldId, new ServerClientConstants.SaveWorld());
 		saved = true;
 	}
 

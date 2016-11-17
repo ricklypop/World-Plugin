@@ -26,7 +26,7 @@ public class ClientSender {
 
 
 			if (!clientParser.RequestedUpdateConversionFinished(index)) {
-				Master.UpdateObject upd = new Master.UpdateObject ();
+				ServerClientConstants.UpdateObject upd = new ServerClientConstants.UpdateObject ();
 				upd.updates = clientParser.ParseUpdates (index);
 
 				if (clientParser.RequestedUpdateConversionComplete(index)) {
@@ -40,7 +40,7 @@ public class ClientSender {
 					upd.done = 0;
 				}
 
-				network.Send (Master.SendObjUpdateId, upd);
+				network.Send (ServerClientConstants.SendObjUpdateId, upd);
 			}
 
 
@@ -59,21 +59,21 @@ public class ClientSender {
 			
 			if (!WorldDatabase.gettingWorld) {
 				
-				Master.SendWorld msg = new Master.SendWorld ();
+				ServerClientConstants.SendWorld msg = new ServerClientConstants.SendWorld ();
 
-				msg.id = index;
+				msg.connId = index;
 
 				byte[] b = clientParser.ParseWorldSend (index);
 				if (b.Length > 0) {
 					
 					msg.world = b;
-					network.Send (Master.SendWorldId, msg);
+					network.Send (ServerClientConstants.SendWorldId, msg);
 
 				} else {
 					
 					msg.done = 2;
 
-					network.Send (Master.SendWorldId, msg);
+					network.Send (ServerClientConstants.SendWorldId, msg);
 					remove.Push(index);
 
 				}
@@ -106,7 +106,7 @@ public class ClientSender {
 		//Stream the current converted changes to other clients
 		if (!clientParser.ChangeConversionFinished()) {
 
-			Master.SendChanges msg = new Master.SendChanges ();
+			ServerClientConstants.SendChanges msg = new ServerClientConstants.SendChanges ();
 
 			byte[] b = clientParser.ParseChangesSend ();
 			msg.changes = b;
@@ -118,8 +118,8 @@ public class ClientSender {
 				msg.done = 0;
 			}
 
-			msg.id = LoadBalancer.player;
-			network.Send (Master.SendChangesId, msg);
+			msg.id = LoadBalancer.connectionID;
+			network.Send (ServerClientConstants.SendChangesId, msg);
 
 		}
 	}

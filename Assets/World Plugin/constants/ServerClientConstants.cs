@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+﻿
+using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
 using System.Collections.Generic;
 
-public class Master {
+public class ServerClientConstants {
 	#region Server Settings
 	public const int maxConnections = 1000;//Max connections
 	public const int roomSize = 16;//Max room size
@@ -23,7 +24,7 @@ public class Master {
 	public class SendWorld : MessageBase{
 		public byte[] world;
 		public int done;
-		public int id;
+		public int connId;
 	}
 
 	public class DestroyObject: MessageBase{
@@ -82,9 +83,8 @@ public class Master {
 		public int totalPlayers;
 		public int playerNumber;
 		public int connNumber;
-		public int leftNumber;
+		public int leftConnId;
 		public int wasHost;
-		public byte[] ids;
 	}
 	
 	public class Joined : MessageBase{

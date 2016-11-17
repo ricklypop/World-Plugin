@@ -15,7 +15,7 @@ public class ClientDirectory {
 
 	public void RegisterOnNetwork ()
 	{
-		network.RegisterHandler (Master.RequestServerId, GetServer);
+		network.RegisterHandler (ServerClientConstants.RequestServerId, GetServer);
 	}
 
 	/// <summary>
@@ -35,7 +35,7 @@ public class ClientDirectory {
 
 	public void GetServer(NetworkMessage m){
 		
-		var msg = m.ReadMessage<Master.RequestServer> ();
+		var msg = m.ReadMessage<ServerClientConstants.RequestServer> ();
 
 		string ip = msg.ip;
 		int port = msg.port;
@@ -47,10 +47,10 @@ public class ClientDirectory {
 
 	public void RequestServer(){
 		
-		Master.RequestServer server = new Master.RequestServer ();
+		ServerClientConstants.RequestServer server = new ServerClientConstants.RequestServer ();
 
 		server.room = WorldDatabase.currentWorldID;
-		network.Send (Master.RequestServerId, server);
+		network.Send (ServerClientConstants.RequestServerId, server);
 
 	}
 }

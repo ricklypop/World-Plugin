@@ -36,14 +36,14 @@ public class MasterServer : MonoBehaviour {
 		config.MinUpdateTimeout = 10;
 		config.DisconnectTimeout = 2000;
 		config.PingTimeout = 500;
-		NetworkServer.Configure(config, Master.maxConnections);
+		NetworkServer.Configure(config, ServerClientConstants.maxConnections);
 		NetworkServer.RegisterHandler(MsgType.Connect, OnClientConnected);
 		NetworkServer.RegisterHandler(MsgType.Disconnect, OnClientDisconnected);
 
-		NetworkServer.RegisterHandler(Master.JoinRoomId,  JoinRoom);
-		NetworkServer.RegisterHandler (Master.RequestWorldId, GetWorld);
-		NetworkServer.RegisterHandler (Master.RequestCreateObjectId, SendCreateObject);
-		NetworkServer.RegisterHandler (Master.DestroyObjectRequestId, SendDestroyObject);
+		NetworkServer.RegisterHandler(ServerClientConstants.JoinRoomId,  JoinRoom);
+		NetworkServer.RegisterHandler (ServerClientConstants.RequestWorldId, GetWorld);
+		NetworkServer.RegisterHandler (ServerClientConstants.RequestCreateObjectId, SendCreateObject);
+		NetworkServer.RegisterHandler (ServerClientConstants.DestroyObjectRequestId, SendDestroyObject);
 
 		serverStreamer.RegisterListeners ();
 
@@ -78,16 +78,16 @@ public class MasterServer : MonoBehaviour {
 	/// </summary>
 	void JoinRoom(NetworkMessage m){
 		DisableLogging.Logger.Log("Connection Id " + m.conn.connectionId + " requested join room.", Color.yellow);
-		var msg = m.ReadMessage<Master.JoinRoom>();
+		var msg = m.ReadMessage<ServerClientConstants.JoinRoom>();
 		string roomID = msg.roomID;
-		if (rooms.ContainsKey (roomID) && rooms [roomID].totalPlayers <= Master.roomSize) {
+		if (rooms.ContainsKey (roomID) && rooms [roomID].totalPlayers <= ServerClientConstants.roomSize) {
 			Player player = new Player ();
 			player.deviceID = msg.deviceID;
 			player.connectionID = m.conn.connectionId;
 			player.room = rooms [roomID];
 			rooms [roomID].AddPlayer (player);
 			DisableLogging.Logger.Log ("Joined Room: " + roomID, Color.green);
-			m.conn.Send (Master.JoinedId, new Master.Joined ());
+			m.conn.Send (ServerClientConstants.JoinedId, new ServerClientConstants.Joined ());
 			MasterServerClient.main.UpdateServer (Room.allPlayers.Count, "", "");
 		} else if (!rooms.ContainsKey (roomID)) {
 			rooms.Add (roomID, new Room ());
@@ -98,11 +98,11 @@ public class MasterServer : MonoBehaviour {
 			player.room = rooms [roomID];
 			rooms [roomID].AddPlayer (player);
 			DisableLogging.Logger.Log ("Room Created: " + roomID, Color.green);
-			m.conn.Send (Master.JoinedId, new Master.Joined ());
+			m.conn.Send (ServerClientConstants.JoinedId, new ServerClientConstants.Joined ());
 			MasterServerClient.main.UpdateServer (Room.allPlayers.Count, roomID, "");
 		} else {
 			DisableLogging.Logger.Log ("Room is full: " + roomID, Color.red);
-			m.conn.Send (Master.RoomFullId, new Master.RoomFull ());
+			m.conn.Send (ServerClientConstants.RoomFullId, new ServerClientConstants.RoomFull ());
 		}
 	}
 
@@ -114,27 +114,27 @@ public class MasterServer : MonoBehaviour {
 	void GetWorld(NetworkMessage mess) {
 		DisableLogging.Logger.Log("World set requested from: "+mess.conn.connectionId, Color.green);
 		int id = Room.allPlayers [mess.conn.connectionId].room.host.connectionID;
-		var r =  mess.ReadMessage<Master.RequestWorld>();
+		var r =  mess.ReadMessage<ServerClientConstants.RequestWorld>();
 
 		if (mess.conn.connectionId != id && (r.host == 0 || r.host == id)) {
-			Master.RequestWorld setW = new Master.RequestWorld ();
+			ServerClientConstants.RequestWorld setW = new ServerClientConstants.RequestWorld ();
 			setW.id = mess.conn.connectionId;
 			setW.host = id;
-			NetworkServer.SendToClient (id, Master.SetWorldId, setW);
+			NetworkServer.SendToClient (id, ServerClientConstants.SetWorldId, setW);
 		} else if (mess.conn.connectionId == id) {
 			DisableLogging.Logger.Log ("Host is client. Skipping request...", Color.yellow);
-			Master.SendWorld set = new Master.SendWorld ();
+			ServerClientConstants.SendWorld set = new ServerClientConstants.SendWorld ();
 			set.done = 1;
 			set.world = new byte[0];
-			set.id = mess.conn.connectionId;
-			mess.conn.Send (Master.SendWorldId, set);
+			set.connId = mess.conn.connectionId;
+			mess.conn.Send (ServerClientConstants.SendWorldId, set);
 		} else if (r.host != id ) {
 			DisableLogging.Logger.Log ("Host left, restarting stream...", Color.yellow);
-			Master.SendWorld set = new Master.SendWorld ();
+			ServerClientConstants.SendWorld set = new ServerClientConstants.SendWorld ();
 			set.done = 3;
 			set.world = new byte[0];
-			set.id = mess.conn.connectionId;
-			mess.conn.Send (Master.SendWorldId, set);
+			set.connId = mess.conn.connectionId;
+			mess.conn.Send (ServerClientConstants.SendWorldId, set);
 		}
 	}
 	#endregion
@@ -145,22 +145,22 @@ public class MasterServer : MonoBehaviour {
 	/// Sends the create object.
 	/// </summary>
 	void SendCreateObject(NetworkMessage m){
-		var msg = m.ReadMessage<Master.CreateObject> ();
+		var msg = m.ReadMessage<ServerClientConstants.CreateObject> ();
 		DisableLogging.Logger.Log ("Create Object Requested: " + msg.trans, Color.green);
 		foreach (Player p in Room.allPlayers[m.conn.connectionId].room.players)
 			if(m.conn.connectionId != p.connectionID)
-				NetworkServer.SendToClient (p.connectionID, Master.CreateObjectId, msg);
+				NetworkServer.SendToClient (p.connectionID, ServerClientConstants.CreateObjectId, msg);
 	}
 
 	/// <summary>
 	/// Sends the destroy object.
 	/// </summary>
 	void SendDestroyObject(NetworkMessage m){
-		var msg = m.ReadMessage<Master.DestroyObject> ();
+		var msg = m.ReadMessage<ServerClientConstants.DestroyObject> ();
 		DisableLogging.Logger.Log ("Destroy Object Requested: " + msg.destroyKey, Color.green);
 		foreach (Player p in Room.allPlayers[m.conn.connectionId].room.players)
 			if(m.conn.connectionId != p.connectionID)
-				NetworkServer.SendToClient (p.connectionID, Master.DestroyObjectRequestId, msg);
+				NetworkServer.SendToClient (p.connectionID, ServerClientConstants.DestroyObjectRequestId, msg);
 	}
 	#endregion
 }

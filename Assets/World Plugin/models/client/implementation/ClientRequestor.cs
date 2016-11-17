@@ -21,11 +21,11 @@ public class ClientRequestor {
 	{
 		
 		DisableLogging.Logger.Log (network.connection.connectionId + ":Requested Join Room: " + WorldDatabase.currentWorldID, Color.cyan);
-		var msg = new Master.JoinRoom ();
+		var msg = new ServerClientConstants.JoinRoom ();
 
 		msg.roomID = WorldDatabase.currentWorldID;
 		msg.deviceID = SystemInfo.deviceUniqueIdentifier;
-		network.Send (Master.JoinRoomId, msg);
+		network.Send (ServerClientConstants.JoinRoomId, msg);
 
 	}
 
@@ -34,8 +34,8 @@ public class ClientRequestor {
 	/// </summary>
 	public void RequestWorld ()
 	{
-		var msg = new Master.RequestWorld ();
-		network.Send (Master.RequestWorldId, msg);
+		var msg = new ServerClientConstants.RequestWorld ();
+		network.Send (ServerClientConstants.RequestWorldId, msg);
 	}
 	#endregion
 
@@ -55,7 +55,7 @@ public class ClientRequestor {
 
 			if (b.Length != 0) {
 
-				Master.RequestObjUpdate up = new  Master.RequestObjUpdate ();
+				ServerClientConstants.RequestObjUpdate up = new  ServerClientConstants.RequestObjUpdate ();
 				up.objUpdates = b;
 
 				if (clientParser.UpdateRequestCompleted ()) {
@@ -65,7 +65,7 @@ public class ClientRequestor {
 				}
 
 				up.fromClient = LoadBalancer.connectionID;
-				network.Send (Master.RequestObjUpdateId, up);
+				network.Send (ServerClientConstants.RequestObjUpdateId, up);
 
 			}
 

@@ -7,7 +7,6 @@ public static class LoadBalancer {
 	public static int player{ get; set; }//The player number in the room
 	public static int totalPlayers{ get; set; }//The total players
 	public static int connectionID{ get; set; }//This client's connection id on the server
-	public static string[] playerIDs;
 	#endregion
 
 	#region Static Methods for the Load Balancer

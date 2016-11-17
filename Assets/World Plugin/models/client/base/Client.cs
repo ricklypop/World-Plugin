@@ -34,7 +34,7 @@ public class Client: MonoBehaviour
 	public Dictionary<int, byte[]> recievedUpdateRequest{get; set;}//The recieved population, a JSON string representing a list of int ids
 
 	//Recieiving Changes
-	public Dictionary<string, byte[]> recievedChanges{get; set;}
+	public Dictionary<int, byte[]> recievedChanges{get; set;}
 
 	#region System Functions
 
@@ -53,7 +53,7 @@ public class Client: MonoBehaviour
 		recievedUpdate= new byte[0];
 		recievedUpdateRequest =  new Dictionary<int, byte[]>();
 		recievedWorld = new byte[0];
-		recievedChanges =  new Dictionary<string, byte[]>();
+		recievedChanges =  new Dictionary<int, byte[]>();
 
 	}
 
@@ -76,18 +76,18 @@ public class Client: MonoBehaviour
 		config.MinUpdateTimeout = 10;
 		config.DisconnectTimeout = 2000;
 		config.PingTimeout = 500;
-		network.Configure (config, Master.maxConnections);
+		network.Configure (config, ServerClientConstants.maxConnections);
 		network.Connect (ip, port);
 
 		network.RegisterHandler (MsgType.Connect, OnClientConnect);
 		network.RegisterHandler (MsgType.Disconnect, OnClientDisconnect);
 
-		network.RegisterHandler (Master.UpdatePlayersId, UpdatePlayer);
-		network.RegisterHandler (Master.TestPingId, TestPing);
-		network.RegisterHandler (Master.CreateObjectId, CreateObject);
-		network.RegisterHandler (Master.RoomFullId, RoomFullDisconnect);
-		network.RegisterHandler (Master.DestroyObjectRequestId, DestroyObject);
-		network.RegisterHandler (Master.SaveWorldId, SaveWorld);
+		network.RegisterHandler (ServerClientConstants.UpdatePlayersId, UpdatePlayer);
+		network.RegisterHandler (ServerClientConstants.TestPingId, TestPing);
+		network.RegisterHandler (ServerClientConstants.CreateObjectId, CreateObject);
+		network.RegisterHandler (ServerClientConstants.RoomFullId, RoomFullDisconnect);
+		network.RegisterHandler (ServerClientConstants.DestroyObjectRequestId, DestroyObject);
+		network.RegisterHandler (ServerClientConstants.SaveWorldId, SaveWorld);
 
 		clientStreamer.RegisterOnNetwork ();
 
@@ -109,18 +109,18 @@ public class Client: MonoBehaviour
 		network.UnregisterHandler (MsgType.Connect);
 		network.UnregisterHandler (MsgType.Disconnect);
 
-		network.UnregisterHandler (Master.UpdatePlayersId);
-		network.UnregisterHandler (Master.SendChangesId);
-		network.UnregisterHandler (Master.SendWorldId);
-		network.UnregisterHandler (Master.SetWorldId);
-		network.UnregisterHandler (Master.JoinedId);
-		network.UnregisterHandler (Master.TestPingId);
-		network.UnregisterHandler (Master.CreateObjectId);
-		network.UnregisterHandler (Master.RoomFullId);
-		network.UnregisterHandler (Master.DestroyObjectRequestId);
-		network.UnregisterHandler (Master.SendObjUpdateId);
-		network.UnregisterHandler (Master.SaveWorldId);
-		network.UnregisterHandler (Master.RequestServerId);
+		network.UnregisterHandler (ServerClientConstants.UpdatePlayersId);
+		network.UnregisterHandler (ServerClientConstants.SendChangesId);
+		network.UnregisterHandler (ServerClientConstants.SendWorldId);
+		network.UnregisterHandler (ServerClientConstants.SetWorldId);
+		network.UnregisterHandler (ServerClientConstants.JoinedId);
+		network.UnregisterHandler (ServerClientConstants.TestPingId);
+		network.UnregisterHandler (ServerClientConstants.CreateObjectId);
+		network.UnregisterHandler (ServerClientConstants.RoomFullId);
+		network.UnregisterHandler (ServerClientConstants.DestroyObjectRequestId);
+		network.UnregisterHandler (ServerClientConstants.SendObjUpdateId);
+		network.UnregisterHandler (ServerClientConstants.SaveWorldId);
+		network.UnregisterHandler (ServerClientConstants.RequestServerId);
 
 		clientParser.ResetWorldParsing ();
 		network.Shutdown ();
@@ -128,7 +128,7 @@ public class Client: MonoBehaviour
 		connectionAttemptCount += 1;
 		gotWorld = false;
 		clientDirectory.wentToDirectory = false;
-		recievedChanges = new Dictionary<string, byte[]> ();
+		recievedChanges = new Dictionary<int, byte[]> ();
 	}
 
 	/// <summary>
@@ -221,8 +221,8 @@ public class Client: MonoBehaviour
 	/// </summary>
 	void TestPing (NetworkMessage m)
 	{
-		var msg = new Master.TestPinged ();
-		network.Send (Master.TestPingedId, msg);
+		var msg = new ServerClientConstants.TestPinged ();
+		network.Send (ServerClientConstants.TestPingedId, msg);
 	}
 		
 	void SaveWorld(NetworkMessage m){
@@ -238,18 +238,14 @@ public class Client: MonoBehaviour
 	/// </summary>
 	void UpdatePlayer (NetworkMessage m)
 	{
-		var msg = m.ReadMessage<Master.UpdatePlayers> ();
+		var msg = m.ReadMessage<ServerClientConstants.UpdatePlayers> ();
 		int totalPlayers = msg.totalPlayers;
 		int player = msg.playerNumber;
+        int leftConn = msg.leftConnId;
 
 		LoadBalancer.totalPlayers = totalPlayers;
 		LoadBalancer.player = player;
 		LoadBalancer.connectionID = msg.connNumber;
-
-		LoadBalancer.playerIDs = System.Text.Encoding.ASCII.GetString (CLZF2.Decompress (msg.ids)).Split (' ');
-		foreach (string playerID in LoadBalancer.playerIDs)
-			if (!recievedChanges.ContainsKey (playerID)) 
-				recievedChanges.Add (playerID, new byte[0]);
 
 		LoadBalancer.Balance ();
 		if (!gotWorld) {
@@ -258,7 +254,14 @@ public class Client: MonoBehaviour
 			clientRequestor.RequestWorld ();
 		}
 
-		WorldObjectCache.RemovePlayerTemp (msg.leftNumber); 
+        if (leftConn != -1)
+        {
+            if (recievedChanges.ContainsKey(leftConn))
+                recievedChanges.Remove(leftConn);
+
+            WorldObjectCache.NotifyPlayerLeft(leftConn);
+        }
+
 		if (msg.wasHost == 1) {
 			recievedWorld = new byte[0];
 			recievedUpdate = new byte[0];
@@ -274,7 +277,7 @@ public class Client: MonoBehaviour
 	/// </summary>
 	void CreateObject (NetworkMessage m)
 	{
-		var msg = m.ReadMessage<Master.CreateObject> ();
+		var msg = m.ReadMessage<ServerClientConstants.CreateObject> ();
 		DisableLogging.Logger.Log ("Received create object: " + msg.name + ":" + msg.trans, Color.cyan);
 		ObjectCommunicator.ClientCreateWorldObject (msg.name, msg.trans, msg.id, msg.own);
 	}
@@ -284,7 +287,7 @@ public class Client: MonoBehaviour
 	/// </summary>
 	void DestroyObject (NetworkMessage m)
 	{
-		var msg = m.ReadMessage<Master.DestroyObject> ();
+		var msg = m.ReadMessage<ServerClientConstants.DestroyObject> ();
 		ObjectCommunicator.ClientDestroyWorldObject (msg.destroyKey);
 	}
 		
@@ -294,8 +297,15 @@ public class Client: MonoBehaviour
 	/// </summary>
 	void DestroyObjects ()
 	{
-		if (gotWorld && DestroyCache.GetDestroyCount() > 0)
-			GameObject.Destroy (DestroyCache.Dequeue ());
+		
+		if (gotWorld && DestroyCache.GetDestroyCount () > 0) {
+			
+			WorldObject obj = DestroyCache.Dequeue ();
+			WorldObjectCache.Remove (obj.id);
+			GameObject.Destroy (obj.gameObject);
+
+		}
+
 	}
 	#endregion
 

@@ -10,7 +10,7 @@ public class ServerSaver : Update {
 	public override void OnUpdate(){
 		time += Time.deltaTime;
 
-		if (time > Master.saveTime / MasterServer.rooms.Count 
+		if (time > ServerClientConstants.saveTime / MasterServer.rooms.Count 
 			&& MasterServer.rooms.Count > 0) {
 
 			Room r = GetNextRoom ();

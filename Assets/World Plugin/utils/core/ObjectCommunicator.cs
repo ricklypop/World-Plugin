@@ -12,10 +12,16 @@ public class ObjectCommunicator {
 	/// </summary>
 	/// <param name="change">Change.</param>
 	public static void SendChangeMessage(Change change){
-		if(WorldObjectCache.KeyCount() > change.id){
-			WorldObjectCache.GetObjectByIndex(change.id).gameObject.SendMessage(
-				StringValue.GetStringValue((WorldConstants.WorldMethods) change.func), change.args);
+
+
+		if(WorldObjectCache.KeyCount() > change.id && WorldObjectCache.GetObject(change.id.ToString()) != null){
+			
+				WorldObjectCache.GetObjectByIndex(change.id).GetComponent<WorldObject>().CallMethod(
+					change.func, change.args);
+				
 		}
+
+
 	} 
 
 	/// <summary>
@@ -25,14 +31,17 @@ public class ObjectCommunicator {
 	/// <param name="c">The compressed transform.</param>
 	/// <param name="ownership">Ownership.</param>
 	public static void LocalCreateWorldObject(Transform create, SerializableTransform c, string ownership){
-		Master.CreateObject obj = new Master.CreateObject ();
+		ServerClientConstants.CreateObject obj = new ServerClientConstants.CreateObject ();
 		obj.name = (int) TypesConverter.ConvertTransform (create);
 		obj.trans = JsonConvert.SerializeObject (c);
-		obj.id = UniqueIDGenerator.GetUniqueID ();
+		obj.id = UniqueIDGenerator.GetUniqueID (UniqueIDGenerator.GetPrefixPosition(WorldObjectCache.GetKeyByIndex(WorldObjectCache.GetLength()-1)) + 1);
 		obj.own = ownership;
 		ClientCreateWorldObject (obj.name, obj.trans, obj.id, ownership);
-		if(LoadBalancer.totalPlayers > YamlConfig.config.minTotalPlayers)
-			Client.main.network.Send(Master.RequestCreateObjectId, obj);
+		if (LoadBalancer.totalPlayers > YamlConfig.config.minTotalPlayers) {
+			
+			Client.main.network.Send (ServerClientConstants.RequestCreateObjectId, obj);
+
+		}
 	}
 
 	/// <summary>
@@ -47,10 +56,7 @@ public class ObjectCommunicator {
 			SerializableTransform c = JsonConvert.DeserializeObject<SerializableTransform> (s);
 			Transform create = (Transform)GameObject.Instantiate (TypesConverter.ConvertType ((WorldObjectCache.Types)name), c.ToTransform ().position, c.ToTransform ().rotation);
 			WorldObject worldObject = create.GetComponent<WorldObject> ();
-			worldObject.type = (WorldObjectCache.Types) name;
-			worldObject.vars = new Dictionary<string, string> ();
-			worldObject.id = id;
-			worldObject.playerID = own;
+            worldObject.SetWorldObject(id, own, (WorldObjectCache.Types)name, new Dictionary<string, string>());
 			WorldObjectCache.Add(id, worldObject);
 			LoadBalancer.Balance ();
 		}
@@ -61,10 +67,20 @@ public class ObjectCommunicator {
 	/// </summary>
 	/// <param name="key">The Key to Destroy.</param>
 	public static void LocalDestroyWorldObject(string key){
-		Master.DestroyObject obj = new Master.DestroyObject ();
+		
+		ServerClientConstants.DestroyObject obj = new ServerClientConstants.DestroyObject ();
 		obj.destroyKey = key;
-		if(LoadBalancer.totalPlayers > YamlConfig.config.minTotalPlayers)
-			Client.main.network.Send(Master.DestroyObjectRequestId, obj);
+
+		if (LoadBalancer.totalPlayers > YamlConfig.config.minTotalPlayers) {
+			
+			Client.main.network.Send (ServerClientConstants.DestroyObjectRequestId, obj);
+
+		}else {
+			
+			ClientDestroyWorldObject (key);
+
+		}
+
 	}
 
 	/// <summary>
@@ -72,10 +88,9 @@ public class ObjectCommunicator {
 	/// </summary>
 	/// <param name="key">The Destroy Key.</param>
 	public static void ClientDestroyWorldObject(string key){
-		if (Client.main.gotWorld)
-			GameObject.Destroy (WorldObjectCache.GetObject(key));
-		else
-			DestroyCache.Enqueue(WorldObjectCache.GetObject(key));
+
+		DestroyCache.Enqueue (WorldObjectCache.GetObject (key));
+
 	}
 	#endregion
 

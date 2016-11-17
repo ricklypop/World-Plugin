@@ -6,17 +6,17 @@ public class ServerStreamer : MonoBehaviour {
 
 
 	public void RegisterListeners(){
-		NetworkServer.RegisterHandler (Master.RequestObjUpdateId, StreamUpdateRequest);
-		NetworkServer.RegisterHandler (Master.SendObjUpdateId, StreamUpdate);
-		NetworkServer.RegisterHandler (Master.SendWorldId, StreamWorld);
-		NetworkServer.RegisterHandler (Master.SendChangesId, StreamChanges);
+		NetworkServer.RegisterHandler (ServerClientConstants.RequestObjUpdateId, StreamUpdateRequest);
+		NetworkServer.RegisterHandler (ServerClientConstants.SendObjUpdateId, StreamUpdate);
+		NetworkServer.RegisterHandler (ServerClientConstants.SendWorldId, StreamWorld);
+		NetworkServer.RegisterHandler (ServerClientConstants.SendChangesId, StreamChanges);
 	}
 
 	/// <summary>
 	/// Streams the changes.
 	/// </summary>
 	void StreamChanges(NetworkMessage m){
-		var msg = m.ReadMessage<Master.SendChanges> ();
+		var msg = m.ReadMessage<ServerClientConstants.SendChanges> ();
 		Room.allPlayers[m.conn.connectionId].room.SendMessage(Room.allPlayers[m.conn.connectionId], msg);
 	}
 
@@ -26,11 +26,11 @@ public class ServerStreamer : MonoBehaviour {
 	void StreamUpdate(NetworkMessage m){
 		DisableLogging.Logger.Log ("Send update requested from: " + m.conn.connectionId, Color.yellow);
 
-		var msg = m.ReadMessage<Master.UpdateObject> ();
+		var msg = m.ReadMessage<ServerClientConstants.UpdateObject> ();
 		int conn = msg.conn;
 		msg.conn = conn;
 
-		NetworkServer.SendToClient (conn, Master.SendObjUpdateId, msg);
+		NetworkServer.SendToClient (conn, ServerClientConstants.SendObjUpdateId, msg);
 	}
 
 	/// <summary>
@@ -39,8 +39,8 @@ public class ServerStreamer : MonoBehaviour {
 	void StreamUpdateRequest(NetworkMessage m){
 		DisableLogging.Logger.Log ("Send update requested from: " + m.conn.connectionId, Color.yellow);
 
-		var msg = m.ReadMessage<Master.RequestObjUpdate> ();
-		NetworkServer.SendToClient (Room.allPlayers[m.conn.connectionId].room.host.connectionID, Master.RequestObjUpdateId, msg);
+		var msg = m.ReadMessage<ServerClientConstants.RequestObjUpdate> ();
+		NetworkServer.SendToClient (Room.allPlayers[m.conn.connectionId].room.host.connectionID, ServerClientConstants.RequestObjUpdateId, msg);
 
 	}
 
@@ -49,18 +49,18 @@ public class ServerStreamer : MonoBehaviour {
 	/// </summary>
 	void StreamWorld(NetworkMessage mess) {
 		
-		var msg = mess.ReadMessage<Master.SendWorld>();
-		int id = msg.id;
+		var msg = mess.ReadMessage<ServerClientConstants.SendWorld>();
+		int id = msg.connId;
 		int done = msg.done;
 
 		if (done == 2) {
 			DisableLogging.Logger.Log("Got world from host: "+mess.conn.connectionId, Color.green);
 		}
 
-		msg.id = id;
+		msg.connId = id;
 		msg.done = done;
 
-		NetworkServer.SendToClient (id, Master.SendWorldId, msg);
+		NetworkServer.SendToClient (id, ServerClientConstants.SendWorldId, msg);
 	}
 
 }

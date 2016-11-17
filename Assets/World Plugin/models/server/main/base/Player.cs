@@ -10,25 +10,25 @@ public class Player{
 	/// <summary>
 	/// Updates the players load balancing information.
 	/// </summary>
-	public void UpdatePlayer(int i, int t, int c, int l, bool wasHost, string[] ids){
-		Master.UpdatePlayers update = new Master.UpdatePlayers ();
+	public void UpdatePlayer(int i, int t, int c, int l, bool wasHost){
+		ServerClientConstants.UpdatePlayers update = new ServerClientConstants.UpdatePlayers ();
 		update.playerNumber = i;
 		update.totalPlayers = t;
 		update.connNumber = c;
-		update.leftNumber = l;
-		update.ids = CLZF2.Compress (System.Text.Encoding.ASCII.GetBytes(string.Join(" ", ids)));
+		update.leftConnId = l;
+
 		if (wasHost)
 			update.wasHost = 1;
 		else
 			update.wasHost = 0;
-		NetworkServer.SendToClient (connectionID, Master.UpdatePlayersId, update);
+		NetworkServer.SendToClient (connectionID, ServerClientConstants.UpdatePlayersId, update);
 	}
 
 	/// <summary>
 	/// Sends the change message to the client.
 	/// </summary>
-	public void SendMessage(Master.SendChanges msg){
-		NetworkServer.SendToClient (connectionID, Master.SendChangesId, msg);
+	public void SendMessage(ServerClientConstants.SendChanges msg){
+		NetworkServer.SendToClient (connectionID, ServerClientConstants.SendChangesId, msg);
 	}
 	#endregion
 }

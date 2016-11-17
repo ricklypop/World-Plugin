@@ -15,9 +15,9 @@ public class ClientStreamer {
 	}
 
 	public void RegisterOnNetwork(){
-		network.RegisterHandler (Master.SendChangesId, GetFromChangesStream);
-		network.RegisterHandler (Master.SendWorldId, GetFromWorldStream);
-		network.RegisterHandler (Master.SendObjUpdateId, GetFromUpdateStream);
+		network.RegisterHandler (ServerClientConstants.SendChangesId, GetFromChangesStream);
+		network.RegisterHandler (ServerClientConstants.SendWorldId, GetFromWorldStream);
+		network.RegisterHandler (ServerClientConstants.SendObjUpdateId, GetFromUpdateStream);
 	}
 
 	/// <summary>
@@ -26,7 +26,7 @@ public class ClientStreamer {
 	public void GetFromUpdateStream (NetworkMessage m)
 	{
 		
-		var msg = m.ReadMessage<Master.UpdateObject> ();
+		var msg = m.ReadMessage<ServerClientConstants.UpdateObject> ();
 
 		client.recievedUpdate = client.recievedUpdate.Concat(msg.updates).ToArray();
 
@@ -52,7 +52,7 @@ public class ClientStreamer {
 	public void GetFromWorldStream (NetworkMessage m)
 	{
 		
-		var recieved = m.ReadMessage<Master.SendWorld> ();
+		var recieved = m.ReadMessage<ServerClientConstants.SendWorld> ();
 
 		int r = recieved.done;
 		byte[] b = recieved.world;
@@ -81,21 +81,24 @@ public class ClientStreamer {
 	public void GetFromChangesStream (NetworkMessage m)
 	{
 		
-		var msg = m.ReadMessage<Master.SendChanges> ();
+		var msg = m.ReadMessage<ServerClientConstants.SendChanges> ();
 		int id = msg.id;
 
-		client.recievedChanges [LoadBalancer.playerIDs[id-1]] = client.recievedChanges[LoadBalancer.playerIDs[id-1]].Concat (msg.changes).ToArray ();
+        if (!client.recievedChanges.ContainsKey(id))
+            client.recievedChanges.Add(id, new byte[0]);
+
+		client.recievedChanges [id] = client.recievedChanges[id].Concat (msg.changes).ToArray ();
 
 
 
 		if (msg.done == 1) {
 			
 			List<Change> changes = JsonConvert.DeserializeObject<List<Change>> (System.Text.Encoding.ASCII.GetString(
-				CLZF2.Decompress(client.recievedChanges[LoadBalancer.playerIDs[id-1]])));
+				CLZF2.Decompress(client.recievedChanges[id])));
 			
 			client.TransferChanges (changes);
 
-			client.recievedChanges[LoadBalancer.playerIDs[id-1]] = new byte[0];
+			client.recievedChanges[id] = new byte[0];
 
 		}
 

@@ -27,19 +27,19 @@ public class MasterServerClient : MonoBehaviour {
 		config.MinUpdateTimeout = 10;
 		config.DisconnectTimeout = 2000;
 		config.PingTimeout = 500;
-		network.Configure (config, Master.maxConnections);
+		network.Configure (config, ServerClientConstants.maxConnections);
 		network.Connect (YamlConfig.config.ip, YamlConfig.config.port);
 
 		network.RegisterHandler (MsgType.Connect, OnClientConnect);
 	}
 
 	public void UpdateServer(int players, string addRoom, string removeRoom){
-		Master.UpdateServer update = new Master.UpdateServer ();
+		ServerClientConstants.UpdateServer update = new ServerClientConstants.UpdateServer ();
 		update.numPlayers = players;
 		update.addRoom = addRoom;
 		update.removeRoom = removeRoom;
 
-		network.Send (Master.UpdateServerId, update);
+		network.Send (ServerClientConstants.UpdateServerId, update);
 	}
 
 	void Update () {
@@ -50,11 +50,11 @@ public class MasterServerClient : MonoBehaviour {
 	}
 		
 	void OnClientConnect(NetworkMessage m){
-		Master.ConnectServer connect = new Master.ConnectServer ();
+		ServerClientConstants.ConnectServer connect = new ServerClientConstants.ConnectServer ();
 		connect.ip = ip;
 		connect.port = port;
 
-		network.Send (Master.ConnectServerId, connect);
+		network.Send (ServerClientConstants.ConnectServerId, connect);
 	}
 
 }

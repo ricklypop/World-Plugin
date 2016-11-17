@@ -17,9 +17,9 @@ public class ClientListener {
 	}
 
 	public void RegisterOnNetwork(){
-		network.RegisterHandler (Master.SetWorldId, OnSendWorld);
-		network.RegisterHandler (Master.JoinedId, OnJoined);
-		network.RegisterHandler (Master.RequestObjUpdateId, OnUpdateRequest);
+		network.RegisterHandler (ServerClientConstants.SetWorldId, OnSendWorld);
+		network.RegisterHandler (ServerClientConstants.JoinedId, OnJoined);
+		network.RegisterHandler (ServerClientConstants.RequestObjUpdateId, OnUpdateRequest);
 	}
 
 	#region Server and Client Chain Methods
@@ -50,7 +50,7 @@ public class ClientListener {
 	void OnUpdateRequest (NetworkMessage m)
 	{
 		
-		var msg = m.ReadMessage<Master.RequestObjUpdate> ();
+		var msg = m.ReadMessage<ServerClientConstants.RequestObjUpdate> ();
 		int index = msg.fromClient;
 
 		if (!client.recievedUpdateRequest.ContainsKey (index)) {
@@ -89,7 +89,7 @@ public class ClientListener {
 		DisableLogging.Logger.Log (network.connection.connectionId
 			+ ":Reached Host Set World, Waiting...", Color.cyan);
 		
-		var recieved = m.ReadMessage<Master.RequestWorld> ();
+		var recieved = m.ReadMessage<ServerClientConstants.RequestWorld> ();
 		int id = recieved.id;
 
 		clientParser.ConvertNewWorld (id);
