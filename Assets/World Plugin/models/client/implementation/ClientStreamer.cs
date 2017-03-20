@@ -63,7 +63,7 @@ public class ClientStreamer {
 
 		} else if (r == 1) {
 			
-			client.StartCoroutine (WorldDatabase.database.GetWorld (WorldDatabase.currentWorldID));
+			WorldDatabase.GetWorld ();
 
 		} else if (r == 2) {
 			

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class AddCamera : MonoBehaviour {
+public class AddCamera: MonoBehaviour {
 	void Start () {
 		GetComponent<CanvasGroup> ().alpha = 0f;
 		GetComponent<Canvas> ().worldCamera = Camera.main;

@@ -1,21 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
-public class DatabaseRetry: MonoBehaviour {
-	public static DatabaseRetry main;
+public class WorldDatabaseInit: MonoBehaviour {
+	public static WorldDatabaseInit main;
 
 	public Transform display;
 
 	public Transform currentDisplay{ get; set; }
 	public bool show { get; set; }
-	public Transform retry{ get; set; }
-	public string message{ get; set; }
+	public bool repeat { get; set; }
+	public Action retry{ get; set; }
 
 	private float time;
 	private float opactity;
 
 	void Start(){
 		main = this;
+		WorldDatabase.Start();
 	}
 
 	void Update(){
@@ -33,21 +35,21 @@ public class DatabaseRetry: MonoBehaviour {
 				Destroy (currentDisplay);
 		}
 
-		if (retry != null && WorldConstants.RETRYTIME <= time)
+		if (repeat && WorldConstants.RETRYTIME <= time)
 			Retry ();
-		else if(retry != null)
+		else if(repeat)
 			time += Time.deltaTime;
 	}
 
 	void Retry(){
-		retry.SendMessage (message);
-		retry = null;
-		message = "";
+		repeat = false;
+		retry ();
+		time = 0;
 	}
 
-	public void SetRetry(Transform t, string s){
-		retry = t;
-		message = s;
+	public void SetRetry(Action r){
+		retry = r;
 		show = true;
+		repeat = true;
 	}
 }

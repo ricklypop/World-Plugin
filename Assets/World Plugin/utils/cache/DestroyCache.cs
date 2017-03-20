@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class DestroyCache : MonoBehaviour {
+public class DestroyCache {
 	public static readonly Queue<WorldObject> DESTROYQUEUE = new Queue<WorldObject>();
 
 	public static void Enqueue (WorldObject worldObject)

@@ -18,7 +18,7 @@ public class YamlConfig : MonoBehaviour {
 	public static readonly ushort MAXSENDMESSAGES = 128;
 	public static readonly int MINTOTALPLAYER = 1;
 
-	public static readonly string CONFIGADDRESS = "http://130.68.237.16:8080/WorldService/ws";
+	public static readonly string CONFIGADDRESS = "http://10.18.248.102:8080/WorldService/ws";
 	public static readonly string DIRECTORYIP = "108.53.152.232";
 	public static readonly int DIRECTORYPORT = 7070;
 	public static readonly int VERSION = 1;

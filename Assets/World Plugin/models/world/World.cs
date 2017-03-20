@@ -29,7 +29,7 @@ public abstract class World: MonoBehaviour{
 		if(WorldDatabase.world != null)
 			WorldDatabase.world.Clear ();
 		WorldDatabase.world.AddRange(WorldObjectCache.GetCompressed());
-		WorldDatabase.database.StartPutWorld ();
+		WorldDatabase.PutWorld ();
 	}
 
 	public static Quaternion FindRotation(Vector3 from, Vector3 target){

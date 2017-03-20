@@ -49,5 +49,7 @@ public class ServerSaver : Update {
 		}
 
 	}
+		
+	public override void OnApplicationQuit (){throw new System.NotImplementedException ();}
 
 }

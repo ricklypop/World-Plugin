@@ -10,6 +10,10 @@ public class StaticUpdate : MonoBehaviour{
 			update.OnUpdate ();
 	}
 
+	void OnApplicationQuit (){
+		foreach (Update update in updates)
+			update.OnApplicationQuit ();
+	}
 }
 
 public abstract class Update{
@@ -18,4 +22,6 @@ public abstract class Update{
 	}
 
 	public abstract void OnUpdate ();
+	public abstract void OnApplicationQuit ();
+	
 }

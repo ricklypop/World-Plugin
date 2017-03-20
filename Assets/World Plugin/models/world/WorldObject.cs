@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System;
 using Newtonsoft.Json;
 
-public class WorldObject : MonoBehaviour {
+public class WorldObject: MonoBehaviour {
     #region Getters and Setters
     public WorldObjectCache.Types type { get; set; }
     public string id { get; set; }

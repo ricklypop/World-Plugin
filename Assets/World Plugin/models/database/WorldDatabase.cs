@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -8,40 +8,58 @@ using System;
 using System.Xml.Serialization;
 using System.IO;
 using System.Text;
+using UnityEngine;
+using System.Net;
+using System.Collections.Specialized;
 
-public class WorldDatabase: MonoBehaviour{
+public class WorldDatabase : Update
+{
 	#region Static Database Values
-	public static WorldDatabase database;
+
 	public static string currentWorldID = SystemInfo.deviceUniqueIdentifier;
+
 	public static List<SerializableWorldObject> world { get; set; }
-	public static SortedList<CharString, string> worldList = new SortedList<CharString, string>();
+
+	public static SortedList<CharString, string> worldList = new SortedList<CharString, string> ();
 	public static bool gettingWorld = false;
 	public static bool getLastWorld = false;
 	public static string checkID = "";
 	public static string worldName = "";
 	public static string address = null;
+
+	private static readonly string PLAYER_CRED = SystemInfo.deviceUniqueIdentifier;
+
+	private static int databaseThreadID { get; set; }
+
 	#endregion
 
-	#region Script Functions
-	void Update ()
+	static WorldDatabase ()
+	{
+		databaseThreadID = MultiThreading.startNewThread (10485760);
+		new WorldDatabase ();
+	}
+
+	public WorldDatabase () : base (){}
+	public static void Start (){}
+
+	public override void OnApplicationQuit (){}
+	public override void OnUpdate ()
 	{
 		if (address == null && YamlConfig.config != null) {
 			address = Environment.GetEnvironmentVariable (YamlConfig.WORLD_DATABASE_ADDRESS_ENV);
 			if (address != null) {
-				database = this;
-				StartCoroutine (GetWorldList ());
-				StartCoroutine(CheckID ());
+				GetWorldList ();
+				CheckID ();
 			}
 		}
 
 		if (checkID == "true") {
 			checkID = "";
-			StartCoroutine (GetLastWorld ());
+			GetLastWorld ();
 		} else if (checkID == "false") {
 			checkID = "";
 			World.GenerateWorld ();
-			currentWorldID = SystemInfo.deviceUniqueIdentifier;
-			StartCoroutine (PutID ());
+			PutID ();
 		}
 
 		if (getLastWorld) {
@@ -50,204 +68,390 @@ public class WorldDatabase: MonoBehaviour{
 		}
 	}
 
-	public void StartPutWorld(){
-		StartCoroutine (PutWorld ());
-	}
+	public static HttpWebRequest CreateWebRequest (string uri,
+	                                               string requestMethod, string contentType)
+	{
+		HttpWebRequest req = null;
 
-	public void StartCheckID(){
-		StartCoroutine (CheckID ());
+		req = (HttpWebRequest)WebRequest.Create (uri);
+		req.KeepAlive = false;
+		req.Method = requestMethod;
+
+		req.ContentType = contentType;
+		req.AllowAutoRedirect = false;
+
+		return req;
 	}
-	#endregion
 
 	#region Get Calls
+
 	/// <summary>
 	/// Gets the world list of ids.
 	/// </summary>
-	public IEnumerator GetWorldList ()
+	public static void GetWorldList ()
 	{
-		string url = address + "/getWorldList";
-		WWWForm form = new WWWForm ();
+		MultiThreading.doTask (databaseThreadID, () => {
+			try {
+				string uri = address + "/getWorldList";
 
-		Dictionary<string, string> headers = form.headers;
-		headers ["Authorization"] = "Basic " + System.Convert.ToBase64String (
-			System.Text.Encoding.ASCII.GetBytes (SystemInfo.deviceUniqueIdentifier + ": "));
+				HttpWebRequest req = CreateWebRequest (uri, "GET", "text/html");
+				req.Headers.Set (HttpRequestHeader.Authorization, "Basic " + System.Convert.ToBase64String (
+					System.Text.Encoding.ASCII.GetBytes (PLAYER_CRED + ": ")));
 
-		WWW www = new WWW (url, null, headers);
-		yield return www;
-		Debug.Log (www.text);
-		worldList.Clear ();
-		Dictionary<string, string> response = new Dictionary<string, string> ();
-		if(www.text.Replace(" ", "") != "" && www.text.Replace(" ", "") != "{}" )
-			response = JsonConvert.DeserializeObject<Dictionary<string, string>>(www.text);
-		if(response == null)
-			response = new Dictionary<string, string>();
-		foreach (string key in response.Keys)
-			worldList.Add (new CharString(key), response [key]);
-		if (www.text.Replace (" ", "") == "")
-			DatabaseRetry.main.SetRetry (transform, "GetWorldList");
-		else
-			DatabaseRetry.main.show = false;
+				req.Timeout = 100000;
+
+				WebResponse response = req.GetResponse ();
+				Stream dataStream = response.GetResponseStream ();
+				StreamReader reader = new StreamReader (dataStream);
+
+				string data = reader.ReadToEnd ();
+
+				worldList.Clear ();
+				Dictionary<string, string> res = new Dictionary<string, string> ();
+				if (data.Replace (" ", "") != "" && data.Replace (" ", "") != "{}")
+					res = JsonConvert.DeserializeObject<Dictionary<string, string>> (data);
+				if (response == null)
+					res = new Dictionary<string, string> ();
+				foreach (string key in res.Keys)
+					worldList.Add (new CharString (key), res [key]);
+			
+				if (data.Replace (" ", "") == "")
+					WorldDatabaseInit.main.SetRetry (GetWorldList);
+				else
+					WorldDatabaseInit.main.show = false;
+				
+			} catch (Exception e) {
+				WorldDatabaseInit.main.SetRetry (GetWorld);
+				Debug.Log (e);
+			}
+		});
 	}
 
 	/// <summary>
 	/// Gets the world based on a given id.
 	/// </summary>
-	public IEnumerator GetWorld (string id)
+	public static void GetWorld ()
 	{
-		gettingWorld = true;
-		string url = address + "/getWorld/" + id;
-		WWWForm form = new WWWForm ();
+		MultiThreading.doTask (databaseThreadID, () => {
+			try {
+				gettingWorld = true;
+				string uri = address + "/getWorld/" + currentWorldID;
 
-		Dictionary<string, string> headers = form.headers;
-		headers ["Authorization"] = "Basic " + System.Convert.ToBase64String (
-			System.Text.Encoding.ASCII.GetBytes (SystemInfo.deviceUniqueIdentifier + ": "));
+				HttpWebRequest req = CreateWebRequest (uri, "GET", "text/html");
+				req.Headers.Set (HttpRequestHeader.Authorization, "Basic " + System.Convert.ToBase64String (
+					System.Text.Encoding.ASCII.GetBytes (PLAYER_CRED + ": ")));
 
-		WWW www = new WWW (url, null, headers);
-		yield return www;
-		Debug.Log (www.text);
+				req.Timeout = 100000;
 
-		try{
-			world = JsonConvert.DeserializeObject<List<SerializableWorldObject>> (www.text);
-		}catch(Exception e){
-			Debug.Log(e.StackTrace);
-		}
-		if(world == null)
-			world = new List<SerializableWorldObject> ();
-		World.CreateWorld ();
-		gettingWorld = false;
+				WebResponse response = req.GetResponse ();
+				Stream dataStream = response.GetResponseStream ();
+				StreamReader reader = new StreamReader (dataStream);
+
+				world = JsonConvert.DeserializeObject<List<SerializableWorldObject>> (reader.ReadToEnd ());
+
+				if (world == null)
+					world = new List<SerializableWorldObject> ();
+				World.CreateWorld ();
+				gettingWorld = false;
+				WorldDatabaseInit.main.show = false;
+
+				reader.Close ();
+				response.Close ();
+			} catch (Exception e) {
+				WorldDatabaseInit.main.SetRetry (GetWorld);
+				Debug.Log (e);
+			}
+		});
 	}
 
 	/// <summary>
 	/// Gets the name of the world.
 	/// </summary>
-	public IEnumerator GetName (string id)
+	public static void GetName ()
 	{
-		string url = address + "/getWorldName/" + id;
-		WWWForm form = new WWWForm ();
+		MultiThreading.doTask (databaseThreadID, () => {
+			try {
+				string uri = address + "/getWorldName/" + currentWorldID;
+				HttpWebRequest req = CreateWebRequest (uri, "GET", "text/html");
+				req.Headers.Set (HttpRequestHeader.Authorization, "Basic " + System.Convert.ToBase64String (
+					System.Text.Encoding.ASCII.GetBytes (PLAYER_CRED + ": ")));
 
-		Dictionary<string, string> headers = form.headers;
-		headers ["Authorization"] = "Basic " + System.Convert.ToBase64String (
-			System.Text.Encoding.ASCII.GetBytes (SystemInfo.deviceUniqueIdentifier + ": "));
+				req.Timeout = 10000;
 
-		WWW www = new WWW (url, null, headers);
-		yield return www;
-		Debug.Log (www.text);
+				WebResponse response = req.GetResponse ();
+				Stream dataStream = response.GetResponseStream ();
+				StreamReader reader = new StreamReader (dataStream);
 
-		worldName = www.text;
+				worldName = reader.ReadToEnd ();
+				WorldDatabaseInit.main.show = false;
+				Debug.Log ("Response: " + worldName);
+
+				reader.Close ();
+				response.Close ();
+			} catch (Exception e) {
+				WorldDatabaseInit.main.SetRetry (GetName);
+				Debug.Log (e);
+			}
+		});
 	}
 
 	/// <summary>
 	/// Gets the last world the unique id was on.
 	/// </summary>
-	public IEnumerator GetLastWorld()
+	public static void GetLastWorld ()
 	{
-		getLastWorld = false;
-		string url = address + "/getLastWorld";
-		WWWForm form = new WWWForm ();
+		MultiThreading.doTask (databaseThreadID, () => {
+			try {
+				getLastWorld = false;
+				string uri = address + "/getLastWorld";
 
-		Dictionary<string, string> headers = form.headers;
-		headers ["Authorization"] = "Basic " + System.Convert.ToBase64String (
-			System.Text.Encoding.ASCII.GetBytes (SystemInfo.deviceUniqueIdentifier + ": "));
+				HttpWebRequest req = CreateWebRequest (uri, "GET", "text/html");
+				req.Headers.Set (HttpRequestHeader.Authorization, "Basic " + System.Convert.ToBase64String (
+					System.Text.Encoding.ASCII.GetBytes (PLAYER_CRED + ": ")));
 
-		WWW www = new WWW (url, null, headers);
-		yield return www;
-		Debug.Log (www.text);
+				req.Timeout = 10000;
 
-		currentWorldID = www.text;
-		getLastWorld = true;
+				WebResponse response = req.GetResponse ();
+				Stream dataStream = response.GetResponseStream ();
+				StreamReader reader = new StreamReader (dataStream);
+
+				currentWorldID = reader.ReadToEnd ();
+				getLastWorld = true;
+				WorldDatabaseInit.main.show = false;
+
+				Debug.Log ("Response: " + currentWorldID);
+				reader.Close ();
+				response.Close ();
+			} catch (Exception e) {
+				WorldDatabaseInit.main.SetRetry (GetLastWorld);
+				Debug.Log (e);
+			}
+		});
 	}
 
 	/// <summary>
 	/// Checks the ID to see if it exists.
 	/// </summary>
-	public IEnumerator CheckID ()
+	public static void CheckID ()
 	{
-		string url = address + "/checkID/" + SystemInfo.deviceUniqueIdentifier;
-		WWWForm form = new WWWForm ();
+		MultiThreading.doTask (databaseThreadID, () => {
+			try {
+				string uri = address + "/checkID/" + PLAYER_CRED;
 
-		Dictionary<string, string> headers = form.headers;
+				HttpWebRequest req = CreateWebRequest (uri, "GET", "text/html");
 
-		WWW www = new WWW (url, null, headers);
-		yield return www;
-		Debug.Log (www.text);
-		checkID = www.text;
-		if (www.text.Replace (" ", "") == "")
-			DatabaseRetry.main.SetRetry (transform, "CheckID");
-		else
-			DatabaseRetry.main.show = false;
+				req.Timeout = 10000;
+
+				WebResponse response = req.GetResponse ();
+				Stream dataStream = response.GetResponseStream ();
+				StreamReader reader = new StreamReader (dataStream);
+
+				checkID = reader.ReadToEnd ();
+				if (checkID.Replace (" ", "") == "")
+					WorldDatabaseInit.main.SetRetry (CheckID);
+				else
+					WorldDatabaseInit.main.show = false;
+			} catch (Exception e) {
+				WorldDatabaseInit.main.SetRetry (GetLastWorld);
+				Debug.Log (e);
+			}
+		});
 	}
+
 	#endregion
 
 	#region Put Calls
+
+	static string convertToForm(Dictionary<string, string> data){
+		string postData = "";
+		
+		foreach (string key in data.Keys)
+		{
+			postData += WWW.EscapeURL(key) + "="
+				+ WWW.EscapeURL(data[key]) + "&";
+		}
+
+		return postData;
+	}
+
 	/// <summary>
 	/// Puts the device ID in the database.
 	/// </summary>
-	public IEnumerator PutID ()
+	public static void PutID ()
 	{
-		string url = address + "/putID";
-		WWWForm form = new WWWForm();
+		MultiThreading.doTask (databaseThreadID, () => {
+			try {
+				string uri = address + "/putID";
 
-		form.AddField("id", SystemInfo.deviceUniqueIdentifier);
-		Dictionary<string, string> headers = form.headers;
-		byte[] rawData = form.data;
+				HttpWebRequest req = CreateWebRequest (uri, "POST", "application/x-www-form-urlencoded");
+				req.Headers.Set (HttpRequestHeader.Authorization, "Basic " + System.Convert.ToBase64String (
+					System.Text.Encoding.ASCII.GetBytes (PLAYER_CRED + ": ")));
 
-		WWW www = new WWW(url, rawData, headers);
-		yield return www;
-		StartCoroutine (PutLastWorld ());
+				Dictionary<string, string> data = new Dictionary<string, string>();
+				data.Add("id", PLAYER_CRED);
+				
+				byte[] byteArray = Encoding.UTF8.GetBytes (convertToForm(data));
+				req.ContentLength = byteArray.Length;
+
+				Stream dataStream = req.GetRequestStream ();
+				
+				dataStream.Write (byteArray, 0, byteArray.Length);
+				dataStream.Close ();
+
+				WebResponse response = req.GetResponse ();
+				dataStream = response.GetResponseStream ();
+
+				StreamReader reader = new StreamReader (dataStream);
+
+				string responseFromServer = reader.ReadToEnd ();
+				Debug.Log (responseFromServer);
+
+				WorldDatabaseInit.main.show = false;
+
+				PutLastWorld ();
+
+				reader.Close ();
+				dataStream.Close ();
+				response.Close ();
+			} catch (Exception e) {
+				WorldDatabaseInit.main.SetRetry (PutID);
+				Debug.Log (e);
+			}
+		});
 	}
 
 	/// <summary>
 	/// Puts the world in the database.
 	/// </summary>
-	public IEnumerator PutWorld ()
+	public static void PutWorld ()
 	{
-		string url = address + "/putWorld";
-		WWWForm form = new WWWForm();
+		MultiThreading.doTask (databaseThreadID, () => {
+			try {
+				string uri = address + "/putWorld";
 
-		form.AddField("world", JsonConvert.SerializeObject(world));
-		form.AddField("id", currentWorldID);
-		Dictionary<string, string> headers = form.headers;
-		headers ["Authorization"] = "Basic " + System.Convert.ToBase64String (
-			System.Text.Encoding.ASCII.GetBytes (SystemInfo.deviceUniqueIdentifier + ": "));
-		byte[] rawData = form.data;
+				HttpWebRequest req = CreateWebRequest (uri, "POST", "application/x-www-form-urlencoded");
+				req.Headers.Set (HttpRequestHeader.Authorization, "Basic " + System.Convert.ToBase64String (
+					System.Text.Encoding.ASCII.GetBytes (PLAYER_CRED + ": ")));
 
-		WWW www = new WWW(url, rawData, headers);
-		yield return www;
+				Dictionary<string, string> data = new Dictionary<string, string>();
+				data.Add("world", JsonConvert.SerializeObject(world));
+				data.Add("id", currentWorldID);
+
+				byte[] byteArray = Encoding.UTF8.GetBytes (convertToForm(data));
+				req.ContentLength = byteArray.Length;
+
+				Stream dataStream = req.GetRequestStream ();
+				
+				dataStream.Write (byteArray, 0, byteArray.Length);
+				dataStream.Close ();
+
+				WebResponse response = req.GetResponse ();
+				dataStream = response.GetResponseStream ();
+
+				StreamReader reader = new StreamReader (dataStream); 
+
+				string responseFromServer = reader.ReadToEnd ();
+				Debug.Log (responseFromServer);
+
+				WorldDatabaseInit.main.show = false;
+
+				reader.Close ();
+				dataStream.Close ();
+				response.Close ();
+			} catch (Exception e) {
+				WorldDatabaseInit.main.SetRetry (PutID);
+				Debug.Log (e);
+			}
+		});
 	}
 
 	/// <summary>
 	/// Puts the last world id, the unique device id was on.
 	/// </summary>
-	public IEnumerator PutLastWorld (){
-		string url = address + "/putLastWorld";
-		WWWForm form = new WWWForm();
+	public static void PutLastWorld ()
+	{
+		MultiThreading.doTask (databaseThreadID, () => {
+			try {
+				string uri = address + "/putLastWorld";
 
-		form.AddField("lastWorld", currentWorldID);
-		Dictionary<string, string> headers = form.headers;
-		headers ["Authorization"] = "Basic " + System.Convert.ToBase64String (
-			System.Text.Encoding.ASCII.GetBytes (SystemInfo.deviceUniqueIdentifier + ": "));
-		byte[ ] rawData = form.data;
+				HttpWebRequest req = CreateWebRequest (uri, "POST", "application/x-www-form-urlencoded");
+				req.Headers.Set (HttpRequestHeader.Authorization, "Basic " + System.Convert.ToBase64String (
+					System.Text.Encoding.ASCII.GetBytes (PLAYER_CRED + ": ")));
 
-		WWW www = new WWW(url, rawData, headers);
-		yield return www;
+				Dictionary<string, string> data = new Dictionary<string, string>();
+				data.Add("lastWorld", currentWorldID);
+
+				byte[] byteArray = Encoding.UTF8.GetBytes (convertToForm(data));
+				req.ContentLength = byteArray.Length;
+
+				Stream dataStream = req.GetRequestStream ();
+				
+				dataStream.Write (byteArray, 0, byteArray.Length);
+				dataStream.Close ();
+
+				WebResponse response = req.GetResponse ();
+				dataStream = response.GetResponseStream ();
+
+				StreamReader reader = new StreamReader (dataStream);
+
+				string responseFromServer = reader.ReadToEnd ();
+				Debug.Log (responseFromServer);
+
+				WorldDatabaseInit.main.show = false;
+
+				reader.Close ();
+				dataStream.Close ();
+				response.Close ();
+			} catch (Exception e) {
+				WorldDatabaseInit.main.SetRetry (PutID);
+				Debug.Log (e);
+			}
+		});
 	}
 
 	/// <summary>
 	/// Puts the name of the world in the database.
 	/// </summary>
-	public IEnumerator PutWorldName (string name)
+	public static void PutWorldName ()
 	{
-		string url = address + "/putWorldName";
-		WWWForm form = new WWWForm();
+		MultiThreading.doTask (databaseThreadID, () => {
+			try {
+				string uri = address + "/putWorldName";
 
-		form.AddField("worldName", name);
-		Dictionary<string, string> headers = form.headers;
-		headers ["Authorization"] = "Basic " + System.Convert.ToBase64String (
-			System.Text.Encoding.ASCII.GetBytes (SystemInfo.deviceUniqueIdentifier + ": "));
-		byte[] rawData = form.data;
+				HttpWebRequest req = CreateWebRequest (uri, "POST", "application/x-www-form-urlencoded");
+				req.Headers.Set (HttpRequestHeader.Authorization, "Basic " + System.Convert.ToBase64String (
+					System.Text.Encoding.ASCII.GetBytes (PLAYER_CRED + ": ")));
 
-		WWW www = new WWW(url, rawData, headers);
-		yield return www;
+				Dictionary<string, string> data = new Dictionary<string, string>();
+				data.Add("worldName", worldName);
+
+				byte[] byteArray = Encoding.UTF8.GetBytes (convertToForm(data));
+				req.ContentLength = byteArray.Length;
+
+				Stream dataStream = req.GetRequestStream ();
+				
+				dataStream.Write (byteArray, 0, byteArray.Length);
+				dataStream.Close ();
+
+				WebResponse response = req.GetResponse ();
+				dataStream = response.GetResponseStream ();
+
+				StreamReader reader = new StreamReader (dataStream);
+
+				string responseFromServer = reader.ReadToEnd ();
+				Debug.Log (responseFromServer);
+
+				WorldDatabaseInit.main.show = false;
+
+				reader.Close ();
+				dataStream.Close ();
+				response.Close ();
+			} catch (Exception e) {
+				WorldDatabaseInit.main.SetRetry (PutID);
+				Debug.Log (e);
+			}
+		});
 	}
+
 	#endregion
 }

@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class UpdateCache : MonoBehaviour {
+public class UpdateCache {
 	public static readonly Queue<int> UPDATEQUEUE = new Queue<int>();
 
 	public static void Enqueue (int id)
