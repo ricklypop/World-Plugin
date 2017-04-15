@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
-using DisableLogging;
+using UnityEngine;
 
 
 public class TaskThread
@@ -38,20 +38,22 @@ public class TaskThread
 
 			while (!stop) {
 				if (tasks.Count != 0) {
+
 					(tasks.Peek ().action)();
 					Task task = tasks.Dequeue ();
 
 					if(task.debugTask){
-						Logger.Log("TASK " + task.taskID + " COMPLETED ON " + id, UnityEngine.Color.blue);
+						DisableLogging.Logger.Log("TASK " + task.taskID + " COMPLETED ON " + id, Color.blue);
 					}
 
 					MultiThreading.onCompletion(task);
+
 				}
 
 			}
 
 		} catch (ThreadAbortException e) {
-			Logger.Log (e.ToString(), UnityEngine.Color.red);
+			DisableLogging.Logger.Log (e.ToString(), Color.red);
 		}
 
 	}

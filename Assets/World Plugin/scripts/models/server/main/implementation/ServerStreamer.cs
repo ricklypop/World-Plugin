@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine.Networking;
 
-public class ServerStreamer : MonoBehaviour {
+public class ServerStreamer {
 
 
 	public void RegisterListeners(){
@@ -47,14 +47,14 @@ public class ServerStreamer : MonoBehaviour {
 	/// <summary>
 	/// Streams the world.
 	/// </summary>
-	void StreamWorld(NetworkMessage mess) {
+	void StreamWorld(NetworkMessage m) {
 		
-		var msg = mess.ReadMessage<ServerClientConstants.SendWorld>();
+		var msg = m.ReadMessage<ServerClientConstants.SendWorld>();
 		int id = msg.connId;
 		int done = msg.done;
 
 		if (done == 2) {
-			DisableLogging.Logger.Log("Got world from host: "+mess.conn.connectionId, Color.green);
+			DisableLogging.Logger.Log("Got world from host: "+m.conn.connectionId, Color.green);
 		}
 
 		msg.connId = id;

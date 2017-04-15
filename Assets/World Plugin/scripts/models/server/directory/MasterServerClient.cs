@@ -1,20 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
+using System;
 
-public class MasterServerClient : MonoBehaviour {
+public class MasterServerClient {
+	
 	public static MasterServerClient main;
 
-	public NetworkClient network;//The network
-
-	public string ip;
-	public int port;
-
+	private NetworkClient network;//The network
 	private bool clientStarted;
-	// Use this for initialization
-	void StartClient () {
+
+	static MasterServerClient(){
 		
-		main = this;
+		main = new MasterServerClient();
+
+	}
+
+	// Use this for initialization
+	public void StartClient () {
 
 		DisableLogging.Logger.Log ("Starting Server Client...", Color.cyan);
 
@@ -35,27 +38,9 @@ public class MasterServerClient : MonoBehaviour {
 
 		network.RegisterHandler (MsgType.Connect, OnClientConnect);
 
-		network.Connect (YamlConfig.config.ip, YamlConfig.config.port);
+		network.Connect (Environment.GetEnvironmentVariable(YamlConfig.DIRECTORY_IP_ENV),
+			int.Parse(Environment.GetEnvironmentVariable(YamlConfig.DIRECTORY_PORT_ENV)));
 
-	}
-
-	public void UpdateServer(int players, string addRoom, string removeRoom){
-		
-		ServerClientConstants.UpdateServer update = new ServerClientConstants.UpdateServer ();
-
-		update.numPlayers = players;
-		update.addRoom = addRoom;
-		update.removeRoom = removeRoom;
-
-		network.Send (ServerClientConstants.UpdateServerId, update);
-
-	}
-
-	void Update () {
-		if (YamlConfig.config != null && !clientStarted) {
-			StartClient ();
-			clientStarted = true;
-		}
 	}
 		
 	void OnClientConnect(NetworkMessage m){
@@ -64,10 +49,22 @@ public class MasterServerClient : MonoBehaviour {
 
 		ServerClientConstants.ConnectServer connect = new ServerClientConstants.ConnectServer ();
 
-		connect.ip = ip;
-		connect.port = port;
+		connect.ip = YamlConfig.config.masterIP;
+		connect.port = YamlConfig.config.masterPort;
 
 		network.Send (ServerClientConstants.ConnectServerId, connect);
+
+	}
+
+	public void UpdateServer(int players, string addRoom, string removeRoom){
+
+		ServerClientConstants.UpdateServer update = new ServerClientConstants.UpdateServer ();
+
+		update.numPlayers = players;
+		update.addRoom = addRoom;
+		update.removeRoom = removeRoom;
+
+		network.Send (ServerClientConstants.UpdateServerId, update);
 
 	}
 

@@ -6,9 +6,14 @@ using System;
 
 public class DirectoryServer {
 	
-	public static Dictionary<int, Server> servers = new Dictionary<int, Server> ();
-
+	private static Dictionary<int, Server> servers = new Dictionary<int, Server> ();
 	private static int directoryThreadID{ get; set; }
+
+	static DirectoryServer(){
+		
+		directoryThreadID = MultiThreading.startNewThread (int.Parse(Environment.GetEnvironmentVariable(YamlConfig.DIRECTORY_MEMORY_ENV)));
+
+	}
 
 	#region Script Base Functions
 	public static void StartServer(){
@@ -28,15 +33,13 @@ public class DirectoryServer {
 		config.PingTimeout = 500;
 		NetworkServer.Configure(config, ServerClientConstants.maxConnections);
 
-		NetworkServer.Listen (YamlConfig.config.port);
+		NetworkServer.Listen (int.Parse(Environment.GetEnvironmentVariable(YamlConfig.DIRECTORY_PORT_ENV)));
 
 		NetworkServer.RegisterHandler(MsgType.Disconnect, OnDisconnect);
 
 		NetworkServer.RegisterHandler(ServerClientConstants.RequestServerId, SendServerConnection);
 		NetworkServer.RegisterHandler(ServerClientConstants.ConnectServerId, ConnectServer);
 		NetworkServer.RegisterHandler(ServerClientConstants.UpdateServerId, UpdateServer);
-
-		directoryThreadID = MultiThreading.startNewThread (YamlConfig.config.memory);
 
 		DisableLogging.Logger.Log("Directory Server Started ", Color.cyan);
 

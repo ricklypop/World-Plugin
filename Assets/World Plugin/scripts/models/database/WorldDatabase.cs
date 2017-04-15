@@ -46,7 +46,9 @@ public class WorldDatabase : Update
 	public override void OnUpdate ()
 	{
 		if (address == null && YamlConfig.config != null) {
+			
 			address = Environment.GetEnvironmentVariable (YamlConfig.WORLD_DATABASE_ADDRESS_ENV);
+
 			if (address != null) {
 				GetWorldList ();
 				CheckID ();
@@ -63,8 +65,11 @@ public class WorldDatabase : Update
 		}
 
 		if (getLastWorld) {
+			
 			getLastWorld = false;
-			Client.main.StartClient (YamlConfig.config.ip, YamlConfig.config.port);
+			Client.main.StartClient (Environment.GetEnvironmentVariable(YamlConfig.DIRECTORY_IP_ENV), 
+				int.Parse(Environment.GetEnvironmentVariable(YamlConfig.DIRECTORY_PORT_ENV)));
+			
 		}
 	}
 

@@ -21,7 +21,11 @@ public class YamlConfig {
 	public static readonly string CONFIG_ADDRESS = "http://10.18.248.102:8080/WorldService/ws";
 	public static readonly string DIRECTORY_IP = "127.0.0.1";
 	public static readonly int DIRECTORY_PORT = 8080;
-	public static readonly int DIRECTORY_MEMORY = 1048576;
+	public static readonly int DIRECTORY_MEMORY = 16777216;
+	public static readonly string MASTER_IP = "127.0.0.1";
+	public static readonly int MASTER_PORT = 7070;
+	public static readonly int MASTER_MEMORY = 16777216;
+
 	public static readonly int VERSION = 1;
 	#endregion
 
@@ -29,6 +33,9 @@ public class YamlConfig {
 	public static readonly string DIRECTORY_IP_ENV = "WORLD_DIRECTORY_ADDRESS";
 	public static readonly string DIRECTORY_PORT_ENV = "WORLD_DIRECTORY_PORT";
 	public static readonly string DIRECTORY_MEMORY_ENV = "WORLD_DIRECTORY_MEMORY";
+	public static readonly string MASTER_IP_ENV = "WORLD_MASTER_ADDRESS";
+	public static readonly string MASTER_PORT_ENV = "WORLD_MASTER_PORT";
+	public static readonly string MASTER_MEMORY_ENV = "WORLD_MASTER_MEMORY";
 
 	static YamlConfig(){
 		new YamlConfig ();
@@ -36,7 +43,9 @@ public class YamlConfig {
 
 	#region Script Functions
 	public YamlConfig(){
+
 		string load = LoadConfig ();
+
 		if (load == null || load == "") {
 			CreateDefault ();
 			SetEnviroment ();
@@ -52,20 +61,33 @@ public class YamlConfig {
 	#endregion
 
 	void SetEnviroment(){
+		
 		if (Environment.GetEnvironmentVariable(WORLD_DATABASE_ADDRESS_ENV) == null) {
 			Environment.SetEnvironmentVariable (WORLD_DATABASE_ADDRESS_ENV, config.address);
 		}
 
 		if (Environment.GetEnvironmentVariable(DIRECTORY_IP_ENV) == null) {
-			Environment.SetEnvironmentVariable (DIRECTORY_IP_ENV, config.ip);
+			Environment.SetEnvironmentVariable (DIRECTORY_IP_ENV, config.directoryIP);
 		}
 
 		if (Environment.GetEnvironmentVariable(DIRECTORY_PORT_ENV) == null) {
-			Environment.SetEnvironmentVariable (DIRECTORY_PORT_ENV, config.port.ToString());
+			Environment.SetEnvironmentVariable (DIRECTORY_PORT_ENV, config.directoryPort.ToString());
 		}
 			
-		if (Environment.GetEnvironmentVariable(DIRECTORY_PORT_ENV) == null) {
-			Environment.SetEnvironmentVariable (DIRECTORY_MEMORY_ENV, config.memory.ToString());
+		if (Environment.GetEnvironmentVariable(DIRECTORY_MEMORY_ENV) == null) {
+			Environment.SetEnvironmentVariable (DIRECTORY_MEMORY_ENV, config.directoryMemory.ToString());
+		}
+
+		if (Environment.GetEnvironmentVariable(MASTER_IP_ENV) == null) {
+			Environment.SetEnvironmentVariable (MASTER_IP_ENV, config.masterIP);
+		}
+
+		if (Environment.GetEnvironmentVariable(MASTER_PORT_ENV) == null) {
+			Environment.SetEnvironmentVariable (MASTER_PORT_ENV, config.masterPort.ToString());
+		}
+
+		if (Environment.GetEnvironmentVariable(MASTER_MEMORY_ENV) == null) {
+			Environment.SetEnvironmentVariable (MASTER_MEMORY_ENV, config.masterMemory.ToString());
 		}
 
 	}
@@ -77,9 +99,13 @@ public class YamlConfig {
 	void CreateDefault(){ 
 		config = new Config ();
 		config.address = CONFIG_ADDRESS;
-		config.ip = DIRECTORY_IP;
-		config.port = DIRECTORY_PORT;
-		config.memory = DIRECTORY_MEMORY;
+		config.directoryIP = DIRECTORY_IP;
+		config.directoryPort = DIRECTORY_PORT;
+		config.directoryMemory = DIRECTORY_MEMORY;
+		config.masterIP = MASTER_IP;
+		config.masterPort = MASTER_PORT;
+		config.masterMemory = MASTER_MEMORY;
+
 		config.version = VERSION;
 
 		config.maxBytes = MAX_BYTES;

@@ -7,7 +7,7 @@ public class Room{
 	#region Values of this Room
 	public List<Player> players = new List<Player> ();
 	public Player host;
-	public string ID{ get; set; }
+	public string id{ get; set; }
 	public int totalPlayers{ get; set; }
 	public bool saved{ get; set; }
 	#endregion
@@ -30,24 +30,34 @@ public class Room{
 	/// Removes the player from the room.
 	/// </summary>
 	public void RemovePlayer(Player player){
+		
 		bool wasHost = false;
+
 		if (player == host)
 			wasHost = true;
+		
 		int left = player.connectionID;
 		players.Remove (player);
 		allPlayers.Remove (player.connectionID);
 		totalPlayers = players.Count;
+
 		if (players.Count != 0) {
+			
 			host = players [0];
 
-			for (int i = 0; i < players.Count; i++)
-				players [i].UpdatePlayer (i + 1, players.Count, players[i].connectionID, left, wasHost);
+			for (int i = 0; i < players.Count; i++){
+				players [i].UpdatePlayer (i + 1, players.Count, players [i].connectionID, left, wasHost);
+			}
+
 			MasterServerClient.main.UpdateServer (allPlayers.Count, "", "");
+
+		}else {
+
+			MasterServer.rooms.Remove (id);
+			MasterServerClient.main.UpdateServer (allPlayers.Count, "", id);
+
 		}
-		else {
-			MasterServer.rooms.Remove (ID);
-			MasterServerClient.main.UpdateServer (allPlayers.Count, "", ID);
-		}
+
 	}
 
 	/// <summary>
@@ -60,25 +70,19 @@ public class Room{
 	}
 
 	/// <summary>
-	/// Save this room world.
-	/// </summary>
-	public void Save(){
-		Player p = NextSavePlayer ();
-		NetworkServer.SendToClient (p.connectionID, ServerClientConstants.SaveWorldId, new ServerClientConstants.SaveWorld());
-		saved = true;
-	}
-
-	/// <summary>
 	/// Gets the next save player.
 	/// </summary>
 	/// <returns>The save player.</returns>
-	Player NextSavePlayer(){
+	public Player NextSavePlayer(){
+		
 		foreach (Player p in players)
 			if (!p.saved) {
 				p.saved = true;
 				return p;
 			}
+		
 		ResetSaves ();
+
 		return NextSavePlayer();
 	}
 

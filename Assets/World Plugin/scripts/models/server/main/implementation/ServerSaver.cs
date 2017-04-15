@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.Networking;
 
 public class ServerSaver : Update {
 	private float time; 
@@ -13,10 +14,9 @@ public class ServerSaver : Update {
 		if (time > ServerClientConstants.saveTime / MasterServer.rooms.Count 
 			&& MasterServer.rooms.Count > 0) {
 
-			Room r = GetNextRoom ();
-			r.Save ();
-
+			SaveWorld ();
 			time = 0;
+
 		} 
 
 	}
@@ -47,6 +47,17 @@ public class ServerSaver : Update {
 		foreach (Room r in MasterServer.rooms.Values) {
 			r.saved = false;
 		}
+
+	}
+
+	void SaveWorld(){
+
+		Room r = GetNextRoom ();
+		Player p = r.NextSavePlayer ();
+
+		NetworkServer.SendToClient (p.connectionID, ServerClientConstants.SaveWorldId, new ServerClientConstants.SaveWorld());
+
+		r.saved = true;
 
 	}
 		

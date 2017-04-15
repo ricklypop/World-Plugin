@@ -49,7 +49,7 @@ public class ClientStreamer {
 	/// </summary>
 	public void GetFromWorldStream (NetworkMessage m)
 	{
-		
+
 		var recieved = m.ReadMessage<ServerClientConstants.SendWorld> ();
 
 		int r = recieved.done;
@@ -60,7 +60,8 @@ public class ClientStreamer {
 			clientSerializer.recievedWorld = clientSerializer.recievedWorld.Concat(b).ToArray();
 
 		} else if (r == 1) {
-			
+
+			DisableLogging.Logger.Log ("Client is host... getting world from database.", Color.cyan);
 			WorldDatabase.GetWorld ();
 
 		} else if (r == 2) {

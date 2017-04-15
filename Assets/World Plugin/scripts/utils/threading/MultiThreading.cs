@@ -5,7 +5,9 @@ using System;
 using Priority_Queue;
 using System.Reflection;
 using System.ComponentModel;
-using DisableLogging;
+using UnityEngine;
+
+
 public class MultiThreading : Update
 {
 
@@ -69,11 +71,12 @@ public class MultiThreading : Update
 		if (Thread.CurrentThread.ThreadState == ThreadState.Aborted)
 			mainIsRunning = false;
 
-		if(mainThreadTasks.Count > 0)
-			foreach(Task task in mainThreadTasks)
-				mainThreadTasks.Peek().action();
+		if (mainThreadTasks.Count > 0) {
 
-		mainThreadTasks = new Queue<Task> ();
+			for(int amount = 0; amount < mainThreadTasks.Count; amount++)
+				mainThreadTasks.Dequeue ().action();
+
+		}
 
 	}
 
@@ -161,7 +164,7 @@ public class MultiThreading : Update
 		t.tasks.Enqueue (task);
 
 		if (debugTask) {
-			Logger.Log ("NEW TASK " + currentTaskID + " FOR:" + t.id, UnityEngine.Color.yellow);
+			DisableLogging.Logger.Log ("NEW TASK " + currentTaskID + " FOR:" + t.id, UnityEngine.Color.yellow);
 		}
 
 		currentTaskID += 1;
@@ -192,7 +195,7 @@ public class MultiThreading : Update
 		activeThreads [threadID].tasks.Enqueue (task);
 
 		if (debugTask) {
-			Logger.Log ("NEW TASK " + currentTaskID + " FOR:" + threadID, UnityEngine.Color.yellow);
+			DisableLogging.Logger.Log ("NEW TASK " + currentTaskID + " FOR:" + threadID, UnityEngine.Color.yellow);
 		}
 		
 		currentTaskID += 1;
@@ -233,7 +236,7 @@ public class MultiThreading : Update
 		if (onCompletionDic.ContainsKey (task)) {
 			
 			if (task.debugTask) {
-				Logger.Log ("ON COMPLETION TRIGGERED FOR: " + task.taskID, UnityEngine.Color.yellow);
+				DisableLogging.Logger.Log ("ON COMPLETION TRIGGERED FOR: " + task.taskID, UnityEngine.Color.yellow);
 			}
 			
 			onCompletionDic [task] ();
@@ -255,7 +258,7 @@ public class MultiThreading : Update
 	public static void stopAll ()
 	{
 
-		Logger.Log ("ABORTING ALL THREADS", UnityEngine.Color.yellow);
+		DisableLogging.Logger.Log ("ABORTING ALL THREADS", UnityEngine.Color.yellow);
 
 		foreach (TaskThread taskThread in activeThreads.Values) {
 			

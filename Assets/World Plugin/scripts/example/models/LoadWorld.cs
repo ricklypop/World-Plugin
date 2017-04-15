@@ -7,13 +7,13 @@ public class LoadWorld : MonoBehaviour {
 	public InputField field;
 	public void pressed(){
 		WorldDatabase.currentWorldID = load.text;
-		Client.main.StartClient (YamlConfig.config.ip, YamlConfig.config.port);
+		Client.main.StartClient (YamlConfig.config.directoryIP, YamlConfig.config.directoryPort);
 		Destroy(GameObject.Find("Selection Screen(Clone)"));
 	}
 
 	public void enter(){
 		WorldDatabase.currentWorldID = field.text;
-		Client.main.StartClient (YamlConfig.config.ip, YamlConfig.config.port);
+		Client.main.StartClient (YamlConfig.config.directoryIP, YamlConfig.config.directoryPort);
 		Destroy(GameObject.Find("Selection Screen(Clone)"));
 	}
 }

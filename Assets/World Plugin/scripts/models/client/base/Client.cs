@@ -41,7 +41,10 @@ public class Client
 	{
 
 		main = this;
-		clientThread = MultiThreading.startNewThread (1048576);
+		clientThread = MultiThreading.startNewThread (16384);
+
+		CheckForChanges ();
+		CheckDestroyObjects ();
 
 	}
 
@@ -89,9 +92,6 @@ public class Client
 		clientStreamer.RegisterOnNetwork ();
 		clientListener.RegisterOnNetwork ();
 		clientDirectory.RegisterOnNetwork ();
-
-		CheckForChanges ();
-		CheckDestroyObjects ();
 
 	}
 
@@ -301,8 +301,10 @@ public class Client
 				});
 
 			}else{
-				
-				MultiThreading.setOnCompletion(task, () => CheckForChanges ());
+
+				//MultiThreading.doOnMainThread(() => CheckDestroyObjects ());
+				MultiThreading.setOnCompletion(task, () => MultiThreading.doOnMainThread(() => Client.main.CheckDestroyObjects ()));
+				//MultiThreading.setOnCompletion(task, () => CheckDestroyObjects ());
 
 			}
 
@@ -346,7 +348,7 @@ public class Client
 
 		Task task = null;
 		task = MultiThreading.doTask (clientThread, () => {
-
+			
 			//If the list is not empty and there aren't any changes being streamed, set up a JSON string to stream
 			if (ChangeCache.GetChangeCount () > 0) {
 
@@ -355,8 +357,10 @@ public class Client
 				ChangeCache.Clear ();
 
 			} else {
-				
-				MultiThreading.setOnCompletion(task, () => CheckForChanges ());
+
+				//MultiThreading.doOnMainThread(() => CheckForChanges ());
+				MultiThreading.setOnCompletion(task, () => MultiThreading.doOnMainThread(() => Client.main.CheckForChanges ()));
+				//MultiThreading.setOnCompletion(task, () => CheckForChanges ());
 
 			}  
 				
