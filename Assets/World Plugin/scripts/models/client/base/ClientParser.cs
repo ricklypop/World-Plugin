@@ -44,7 +44,7 @@ public class ClientParser
 		currentChangesIndex = 0;
 		convertedChanges = new byte[0];
 
-		parserThreadID = MultiThreading.startNewThread (16384);
+		parserThreadID = MultiThreading.startNewThread (16777216);
 	}
 
 

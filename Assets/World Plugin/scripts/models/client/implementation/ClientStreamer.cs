@@ -61,7 +61,7 @@ public class ClientStreamer {
 
 		} else if (r == 1) {
 
-			DisableLogging.Logger.Log ("Client is host... getting world from database.", Color.cyan);
+			DLog.Log ("Client is host... getting world from database.", Color.cyan);
 			WorldDatabase.GetWorld ();
 
 		} else if (r == 2) {

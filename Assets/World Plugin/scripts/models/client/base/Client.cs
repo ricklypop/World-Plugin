@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
-using DisableLogging;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Linq;
@@ -41,7 +40,7 @@ public class Client
 	{
 
 		main = this;
-		clientThread = MultiThreading.startNewThread (16384);
+		clientThread = MultiThreading.startNewThread (16777216);
 
 		CheckForChanges ();
 		CheckDestroyObjects ();
@@ -54,7 +53,7 @@ public class Client
 	/// </summary>
 	public void StartClient (string ip, int port)
 	{
-		DisableLogging.Logger.Log ("Starting Client...", Color.cyan);
+		DLog.Log ("Starting Client...", Color.cyan);
 
 		network = new NetworkClient ();
 
@@ -144,7 +143,7 @@ public class Client
 	/// </summary>
 	void OnClientConnect (NetworkMessage m)
 	{
-		DisableLogging.Logger.Log (network.connection.connectionId + ":Client Started", Color.cyan);
+		DLog.Log (network.connection.connectionId + ":Client Started", Color.cyan);
 		if (clientDirectory.wentToDirectory) {
 			clientRequestor.JoinRoom ();
 		}else {
@@ -200,7 +199,7 @@ public class Client
 	/// </summary>
 	void RoomFullDisconnect (NetworkMessage m)
 	{
-		DisableLogging.Logger.Log (network.connection.connectionId + ":Room is full. Disconnecting...", Color.red);
+		DLog.Log (network.connection.connectionId + ":Room is full. Disconnecting...", Color.red);
 		Disconnect (false);
 	}
 
@@ -254,7 +253,7 @@ public class Client
 			clientSerializer.recievedWorld = new byte[0];
 			clientSerializer.recievedUpdate = new byte[0];
 		}
-		DisableLogging.Logger.Log ("Updated Player:" + totalPlayers + ": " + player, Color.cyan);
+		DLog.Log ("Updated Player:" + totalPlayers + ": " + player, Color.cyan);
 	}
 
 
@@ -266,7 +265,7 @@ public class Client
 	void CreateObject (NetworkMessage m)
 	{
 		var msg = m.ReadMessage<ServerClientConstants.CreateObject> ();
-		DisableLogging.Logger.Log ("Received create object: " + msg.name + ":" + msg.trans, Color.cyan);
+		DLog.Log ("Received create object: " + msg.name + ":" + msg.trans, Color.cyan);
 		ObjectCommunicator.ClientCreateWorldObject (msg.name, msg.trans, msg.id, msg.own);
 	}
 		

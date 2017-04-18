@@ -18,7 +18,7 @@ public class YamlConfig {
 	public static readonly ushort MAX_SEND_MESSAGES = 128;
 	public static readonly int MIN_TOTAL_PLAYER = 1;
 
-	public static readonly string CONFIG_ADDRESS = "http://10.18.248.102:8080/WorldService/ws";
+	public static readonly string CONFIG_ADDRESS = "http://192.168.1.207:8080/WorldService/ws";
 	public static readonly string DIRECTORY_IP = "127.0.0.1";
 	public static readonly int DIRECTORY_PORT = 8080;
 	public static readonly int DIRECTORY_MEMORY = 16777216;
@@ -135,7 +135,7 @@ public class YamlConfig {
 			file.Close ();
 			return con;
 		} catch (Exception e) {
-			DisableLogging.Logger.Log ("File does not exist! Error: " + e.StackTrace, Color.yellow);
+			DLog.Log ("File does not exist! Error: " + e.StackTrace, Color.yellow);
 		}
 		return null;
 	}

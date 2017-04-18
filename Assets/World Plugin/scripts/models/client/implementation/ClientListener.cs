@@ -31,7 +31,7 @@ public class ClientListener {
 	void OnJoined (NetworkMessage m)
 	{
 		
-		DisableLogging.Logger.Log (network.connection.connectionId + ": Joined", Color.cyan);
+		DLog.Log (network.connection.connectionId + ": Joined", Color.cyan);
 
 		WorldDatabase.world = new List<SerializableWorldObject> ();
 		WorldObjectCache.ClearCache ();
@@ -76,7 +76,7 @@ public class ClientListener {
 	void OnSendWorld (NetworkMessage m)
 	{
 		
-		DisableLogging.Logger.Log (network.connection.connectionId
+		DLog.Log (network.connection.connectionId
 			+ ":Reached Host Set World, Waiting...", Color.cyan);
 		
 		var recieved = m.ReadMessage<ServerClientConstants.RequestWorld> ();

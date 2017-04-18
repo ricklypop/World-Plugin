@@ -18,7 +18,7 @@ public class DirectoryServer {
 	#region Script Base Functions
 	public static void StartServer(){
 
-		DisableLogging.Logger.Log("Starting Directory Server... ", Color.cyan);
+		DLog.Log("Starting Directory Server... ", Color.cyan);
 
 		ConnectionConfig config = new ConnectionConfig();
 		config.AddChannel(QosType.ReliableSequenced);
@@ -41,7 +41,7 @@ public class DirectoryServer {
 		NetworkServer.RegisterHandler(ServerClientConstants.ConnectServerId, ConnectServer);
 		NetworkServer.RegisterHandler(ServerClientConstants.UpdateServerId, UpdateServer);
 
-		DisableLogging.Logger.Log("Directory Server Started ", Color.cyan);
+		DLog.Log("Directory Server Started ", Color.cyan);
 
 	}
 	#endregion
@@ -70,7 +70,7 @@ public class DirectoryServer {
 	static void OnDisconnect(NetworkMessage m){
 
 		if (servers.ContainsKey (m.conn.connectionId)) {
-			DisableLogging.Logger.Log ("Server disconnected: " + m.conn.connectionId, Color.yellow);
+			DLog.Log ("Server disconnected: " + m.conn.connectionId, Color.yellow);
 			servers.Remove (m.conn.connectionId);
 		}
 
@@ -81,7 +81,7 @@ public class DirectoryServer {
 		var msg = m.ReadMessage<ServerClientConstants.RequestServer> ();
 		int id = m.conn.connectionId;
 
-		DisableLogging.Logger.Log ("Got client: " + id, Color.cyan);
+		DLog.Log ("Got client: " + id, Color.cyan);
 
 		try{
 		MultiThreading.doTask (directoryThreadID, () => {
@@ -94,7 +94,7 @@ public class DirectoryServer {
 			message.ip = sendTo.ip;
 			message.port = sendTo.port;
 
-			DisableLogging.Logger.Log ("Assigned server: " + sendTo.ip + ", " + sendTo.port, Color.cyan);
+			DLog.Log ("Assigned server: " + sendTo.ip + ", " + sendTo.port, Color.cyan);
 
 			MultiThreading.doOnMainThread(() => 
 				NetworkServer.SendToClient (id, ServerClientConstants.RequestServerId, message));
@@ -116,13 +116,13 @@ public class DirectoryServer {
 		server.connectionID = m.conn.connectionId;
 		servers.Add (m.conn.connectionId, server);
 
-		DisableLogging.Logger.Log ("Connected Server: " + server.ip + ":" + server.port, Color.yellow);
+		DLog.Log ("Connected Server: " + server.ip + ":" + server.port, Color.yellow);
 
 	}
 
 	static void UpdateServer(NetworkMessage m){
 
-		DisableLogging.Logger.Log ("Updating Server: " + m.conn.connectionId, Color.yellow);
+		DLog.Log ("Updating Server: " + m.conn.connectionId, Color.yellow);
 
 		var msg = m.ReadMessage<ServerClientConstants.UpdateServer> ();
 		servers [m.conn.connectionId].numPlayers = msg.numPlayers;

@@ -57,7 +57,7 @@ public class MasterServer : MonoBehaviour {
 
 		serverStreamer.RegisterListeners ();
 
-		DisableLogging.Logger.Log("Starting Server... ", Color.cyan);
+		DLog.Log("Starting Server... ", Color.cyan);
 
 		NetworkServer.Listen (int.Parse(Environment.GetEnvironmentVariable(YamlConfig.MASTER_PORT_ENV)));
 	}
@@ -67,7 +67,7 @@ public class MasterServer : MonoBehaviour {
 	/// </summary>
 	static void OnClientConnected(NetworkMessage mess) {
 		
-		DisableLogging.Logger.Log("Connected: " + mess.conn.connectionId, Color.green);
+		DLog.Log("Connected: " + mess.conn.connectionId, Color.green);
 
 	}
 
@@ -76,12 +76,12 @@ public class MasterServer : MonoBehaviour {
 	/// </summary>
 	static void OnClientDisconnected(NetworkMessage mess) {
 		
-		DisableLogging.Logger.Log("Player left: "+mess.conn.connectionId, Color.red);
+		DLog.Log("Player left: "+mess.conn.connectionId, Color.red);
 
 		if (Room.allPlayers.ContainsKey (mess.conn.connectionId)) {
 			Room r = Room.allPlayers [mess.conn.connectionId].room;
 			r.RemovePlayer (Room.allPlayers [mess.conn.connectionId]);
-			DisableLogging.Logger.Log("Player remove from room id: " + r.id, Color.yellow);
+			DLog.Log("Player remove from room id: " + r.id, Color.yellow);
 		}
 
 	}
@@ -95,7 +95,7 @@ public class MasterServer : MonoBehaviour {
 	/// </summary>
 	static void JoinRoom(NetworkMessage m){
 		
-		DisableLogging.Logger.Log("Connection Id " + m.conn.connectionId + " requested join room.", Color.yellow);
+		DLog.Log("Connection Id " + m.conn.connectionId + " requested join room.", Color.yellow);
 
 		var msg = m.ReadMessage<ServerClientConstants.JoinRoom>();
 		int id = m.conn.connectionId;
@@ -106,7 +106,7 @@ public class MasterServer : MonoBehaviour {
 			
 			if (rooms.ContainsKey (roomID) && rooms [roomID].totalPlayers <= ServerClientConstants.roomSize) {
 
-				DisableLogging.Logger.Log ("Joined Room: " + roomID, Color.green);
+				DLog.Log ("Joined Room: " + roomID, Color.green);
 
 				Player player = new Player ();
 				player.deviceID = msg.deviceID;
@@ -134,7 +134,7 @@ public class MasterServer : MonoBehaviour {
 
 				rooms [roomID].AddPlayer (player);
 
-				DisableLogging.Logger.Log ("Room Created: " + roomID, Color.green);
+				DLog.Log ("Room Created: " + roomID, Color.green);
 
 				MultiThreading.doOnMainThread(() => { 
 					
@@ -145,7 +145,7 @@ public class MasterServer : MonoBehaviour {
 
 			} else {
 			
-				DisableLogging.Logger.Log ("Room is full: " + roomID, Color.red);
+				DLog.Log ("Room is full: " + roomID, Color.red);
 
 				MultiThreading.doOnMainThread(() =>  NetworkServer.SendToClient (id, ServerClientConstants.RoomFullId, new ServerClientConstants.RoomFull ()));
 
@@ -161,7 +161,7 @@ public class MasterServer : MonoBehaviour {
 	/// </summary>
 	static void GetWorld(NetworkMessage m) {
 		
-		DisableLogging.Logger.Log("World set requested from: "+m.conn.connectionId, Color.green);
+		DLog.Log("World set requested from: "+m.conn.connectionId, Color.green);
 
 		int id = Room.allPlayers [m.conn.connectionId].room.host.connectionID;
 		var r =  m.ReadMessage<ServerClientConstants.RequestWorld>();
@@ -179,7 +179,7 @@ public class MasterServer : MonoBehaviour {
 
 			} else if (m.conn.connectionId == id) {
 				
-				DisableLogging.Logger.Log ("Host is client. Skipping request...", Color.yellow);
+				DLog.Log ("Host is client. Skipping request...", Color.yellow);
 
 				ServerClientConstants.SendWorld set = new ServerClientConstants.SendWorld ();
 
@@ -191,7 +191,7 @@ public class MasterServer : MonoBehaviour {
 
 			} else if (r.host != id) {
 				
-				DisableLogging.Logger.Log ("Host left, restarting stream...", Color.yellow);
+				DLog.Log ("Host left, restarting stream...", Color.yellow);
 
 				ServerClientConstants.SendWorld set = new ServerClientConstants.SendWorld ();
 
@@ -216,7 +216,7 @@ public class MasterServer : MonoBehaviour {
 	static void SendCreateObject(NetworkMessage m){
 		var msg = m.ReadMessage<ServerClientConstants.CreateObject> ();
 
-		DisableLogging.Logger.Log ("Create Object Requested: " + msg.trans, Color.green);
+		DLog.Log ("Create Object Requested: " + msg.trans, Color.green);
 
 		MultiThreading.doTask (masterServerThread, () => {
 			foreach (Player p in Room.allPlayers[m.conn.connectionId].room.players) {
@@ -238,7 +238,7 @@ public class MasterServer : MonoBehaviour {
 	static void SendDestroyObject(NetworkMessage m){
 		var msg = m.ReadMessage<ServerClientConstants.DestroyObject> ();
 
-		DisableLogging.Logger.Log ("Destroy Object Requested: " + msg.destroyKey, Color.green);
+		DLog.Log ("Destroy Object Requested: " + msg.destroyKey, Color.green);
 
 		MultiThreading.doTask (masterServerThread, () => {
 			foreach (Player p in Room.allPlayers[m.conn.connectionId].room.players) {

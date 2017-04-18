@@ -49,7 +49,7 @@ public class ClientDirectory {
 		string ip = msg.ip;
 		int port = msg.port;
 
-		DisableLogging.Logger.Log ("Connecting to: " + ip + ":" + port, Color.yellow);
+		DLog.Log ("Connecting to: " + ip + ":" + port, Color.yellow);
 		ConnectToServer (ip, port);
 
 	}

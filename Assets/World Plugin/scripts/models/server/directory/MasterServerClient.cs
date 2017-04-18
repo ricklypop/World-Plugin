@@ -19,7 +19,7 @@ public class MasterServerClient {
 	// Use this for initialization
 	public void StartClient () {
 
-		DisableLogging.Logger.Log ("Starting Server Client...", Color.cyan);
+		DLog.Log ("Starting Server Client...", Color.cyan);
 
 		network = new NetworkClient ();
 		ConnectionConfig config = new ConnectionConfig ();
@@ -45,7 +45,7 @@ public class MasterServerClient {
 		
 	void OnClientConnect(NetworkMessage m){
 
-		DisableLogging.Logger.Log ("Server Client Connected to Directory.", Color.cyan);
+		DLog.Log ("Server Client Connected to Directory.", Color.cyan);
 
 		ServerClientConstants.ConnectServer connect = new ServerClientConstants.ConnectServer ();
 

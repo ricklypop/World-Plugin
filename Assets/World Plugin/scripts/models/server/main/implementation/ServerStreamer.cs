@@ -24,7 +24,7 @@ public class ServerStreamer {
 	/// Streams the update.
 	/// </summary>
 	void StreamUpdate(NetworkMessage m){
-		DisableLogging.Logger.Log ("Send update requested from: " + m.conn.connectionId, Color.yellow);
+		DLog.Log ("Send update requested from: " + m.conn.connectionId, Color.yellow);
 
 		var msg = m.ReadMessage<ServerClientConstants.UpdateObject> ();
 		int conn = msg.conn;
@@ -37,7 +37,7 @@ public class ServerStreamer {
 	/// Streams the update.
 	/// </summary>
 	void StreamUpdateRequest(NetworkMessage m){
-		DisableLogging.Logger.Log ("Send update requested from: " + m.conn.connectionId, Color.yellow);
+		DLog.Log ("Send update requested from: " + m.conn.connectionId, Color.yellow);
 
 		var msg = m.ReadMessage<ServerClientConstants.RequestObjUpdate> ();
 		NetworkServer.SendToClient (Room.allPlayers[m.conn.connectionId].room.host.connectionID, ServerClientConstants.RequestObjUpdateId, msg);
@@ -54,7 +54,7 @@ public class ServerStreamer {
 		int done = msg.done;
 
 		if (done == 2) {
-			DisableLogging.Logger.Log("Got world from host: "+m.conn.connectionId, Color.green);
+			DLog.Log("Got world from host: "+m.conn.connectionId, Color.green);
 		}
 
 		msg.connId = id;

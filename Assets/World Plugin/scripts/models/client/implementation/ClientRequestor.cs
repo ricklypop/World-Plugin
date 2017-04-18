@@ -25,7 +25,7 @@ public class ClientRequestor
 	public void JoinRoom ()
 	{
 		
-		DisableLogging.Logger.Log (network.connection.connectionId + ":Requested Join Room: " + WorldDatabase.currentWorldID, Color.cyan);
+		DLog.Log (network.connection.connectionId + ":Requested Join Room: " + WorldDatabase.currentWorldID, Color.cyan);
 		var msg = new ServerClientConstants.JoinRoom ();
 
 		msg.roomID = WorldDatabase.currentWorldID;
